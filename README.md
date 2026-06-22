@@ -70,6 +70,10 @@ pnpm --filter brew-pos-web dev           # POS web (Vite)
 pnpm --filter brew-admin-global dev      # global admin (Vite)
 ```
 
+**Verify end-to-end:** with the backend running, `pnpm demo` walks the full §12
+flow (login → order → pay → loyalty → invoice → report). Full local runbook:
+[`docs/RUNNING.md`](docs/RUNNING.md).
+
 ## CI/CD
 
 - **`.github/workflows/ci.yml`** — on every PR/push: `pnpm install → lint → test → build`.

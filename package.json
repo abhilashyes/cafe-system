@@ -12,6 +12,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "dev": "turbo run dev",
+    "demo": "node scripts/demo-flow.mjs",
     "contracts:lint": "pnpm --filter @brew/contracts lint"
   },
   "devDependencies": {
