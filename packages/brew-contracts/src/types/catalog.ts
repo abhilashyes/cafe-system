@@ -46,6 +46,12 @@ export interface Product {
   nutrition?: Record<string, number>;
 }
 
+/** A product as resolved for a specific store (availability + effective price). */
+export interface MenuItem extends Product {
+  available: boolean;
+  pricePaise: number;
+}
+
 /** Store-level availability/pricing overrides (menu varies by store). */
 export interface StoreProductOverride {
   storeId: Id;

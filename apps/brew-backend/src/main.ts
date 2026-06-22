@@ -8,6 +8,9 @@ import { AuditInterceptor } from './common/audit/audit.interceptor';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
 
+  // Allow the POS/admin web apps + KDS WebSocket to call the API in dev.
+  app.enableCors({ origin: true });
+
   // All routes under /v1 (API versioning per the contracts).
   app.setGlobalPrefix('');
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1', prefix: 'v' });

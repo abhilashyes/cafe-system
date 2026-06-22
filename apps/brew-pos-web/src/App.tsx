@@ -1,14 +1,19 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { OrderEntry } from './screens/OrderEntry';
+import { Kds } from './screens/Kds';
 
 /**
- * POS + store ops + KDS shell. Screens are placeholders (Phase 0) — each is a
- * stub for the flows in §5.2 / §5.5 of the build brief.
+ * POS + store ops + KDS shell. Order Entry and KDS are live (wired to the backend
+ * via @brew/contracts + the /kds WebSocket); the rest are §5.2 placeholders.
  */
+const live: Array<{ path: string; label: string }> = [
+  { path: '/order', label: 'Order Entry (live)' },
+  { path: '/kds', label: 'KDS (live)' },
+];
+
 const screens: Array<{ path: string; label: string; note: string }> = [
-  { path: '/order', label: 'Order Entry', note: 'Counter order entry, modifiers, dine-in/takeaway + table no., hold/recall, link app pre-orders.' },
   { path: '/payments', label: 'Payments', note: 'UPI QR / UPI collect, Razorpay card terminal, cash. Manager-approved refunds.' },
   { path: '/fulfilment', label: 'Fulfilment', note: 'Order queue + bump bar; triggers KOT prints to stations.' },
-  { path: '/kds', label: 'KDS', note: 'Wall-mounted kitchen display — station lanes, SLA color cues, all-day counts.' },
   { path: '/store-ops', label: 'Store Ops', note: 'Open/close store, 86 items, cash drawer, end-of-day Z-report.' },
   { path: '/inventory', label: 'Inventory', note: 'On-hand stock, wastage, transfers, receiving, store POs.' },
   { path: '/reports', label: 'Reports', note: "Day's sales, top items, staff sales — scoped to this store." },
@@ -30,6 +35,11 @@ export function App() {
       <nav style={{ width: 200, borderRight: '1px solid #eee', padding: 16 }}>
         <h1 style={{ fontSize: 18 }}>Brew POS</h1>
         <ul style={{ listStyle: 'none', padding: 0, lineHeight: 2 }}>
+          {live.map((s) => (
+            <li key={s.path}>
+              <Link to={s.path}>{s.label}</Link>
+            </li>
+          ))}
           {screens.map((s) => (
             <li key={s.path}>
               <Link to={s.path}>{s.label}</Link>
@@ -40,6 +50,8 @@ export function App() {
       <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<Navigate to="/order" replace />} />
+          <Route path="/order" element={<OrderEntry />} />
+          <Route path="/kds" element={<Kds />} />
           {screens.map((s) => (
             <Route key={s.path} path={s.path} element={<Placeholder label={s.label} note={s.note} />} />
           ))}

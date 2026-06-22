@@ -50,6 +50,18 @@ export interface Order {
   createdAt: string;
 }
 
+/** Request body for creating an order. */
+export interface CreateOrderInput {
+  storeId: Id;
+  channel: OrderChannel;
+  fulfilment: FulfilmentType;
+  tableNumber?: string;
+  scheduledFor?: string;
+  customerId?: Id;
+  customerName?: string;
+  items: Array<{ productId: Id; quantity: number; modifierOptionIds?: Id[] }>;
+}
+
 export interface OrderTotals {
   subtotalPaise: number;
   /** GST split for the place of supply. */

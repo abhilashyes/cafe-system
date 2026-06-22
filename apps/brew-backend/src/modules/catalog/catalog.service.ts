@@ -1,14 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import type { Product } from '@brew/contracts';
+import type { MenuItem, Product } from '@brew/contracts';
 import { DomainEvents } from '@brew/contracts';
 import { EventBus } from '../../common/events/event-bus';
-
-export interface MenuItem extends Product {
-  /** Store-resolved availability (false = 86'd). */
-  available: boolean;
-  /** Store-resolved price (override or base). */
-  pricePaise: number;
-}
 
 /** Catalog/Menu — products, modifiers, recipes (BOM), GST/HSN, store availability. */
 @Injectable()

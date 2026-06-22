@@ -183,4 +183,47 @@ describe('Demo flow (e2e)', () => {
       .send({ storeId: store, channel: 'WALK_IN', fulfilment: 'TAKEAWAY', items: [{ productId: 'prod_latte', quantity: 1 }] })
       .expect(201);
   });
+
+  it('builds a KDS ticket per order and marks the order ready when all items are bumped', async () => {
+    const http = request(app.getHttpServer());
+    const store = 'store_kds';
+
+    // Place a 2-item order → a KDS ticket with one bar item + one bakery item.
+    const orderRes = await http
+      .post('/v1/orders')
+      .set(auth)
+      .set('Idempotency-Key', 'order-kds')
+      .send({
+        storeId: store,
+        channel: 'WALK_IN',
+        fulfilment: 'DINE_IN',
+        tableNumber: '5',
+        customerName: 'Sam',
+        items: [
+          { productId: 'prod_latte', quantity: 1 },
+          { productId: 'prod_croissant', quantity: 1 },
+        ],
+      })
+      .expect(201);
+    const orderId = orderRes.body.id;
+
+    // The KDS shows the ticket with both stations.
+    const tickets = await http.get(`/v1/kds/${store}/tickets`).set(auth).expect(200);
+    const ticket = tickets.body.find((t: { orderId: string }) => t.orderId === orderId);
+    expect(ticket).toBeDefined();
+    expect(ticket.tableNumber).toBe('5');
+    expect(ticket.items).toHaveLength(2);
+
+    // Station-filtered view returns only that station's items.
+    const barOnly = await http.get(`/v1/kds/${store}/tickets?station=BAR`).set(auth).expect(200);
+    const barTicket = barOnly.body.find((t: { orderId: string }) => t.orderId === orderId);
+    expect(barTicket.items.every((i: { station: string }) => i.station === 'BAR')).toBe(true);
+
+    // Bump both items → order transitions to READY.
+    for (const item of ticket.items) {
+      await http.post(`/v1/kds/items/${item.itemId}/bump`).set(auth).expect(201);
+    }
+    const order = await http.get(`/v1/orders/${orderId}`).set(auth).expect(200);
+    expect(order.body.status).toBe('READY');
+  });
 });
