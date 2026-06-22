@@ -4,6 +4,10 @@ Infrastructure as Code for Project Brew on **AWS** (Terraform). Phase 0 ships a
 **documented skeleton** — module/environment layout and intended building blocks —
 not real provisioning.
 
+> The concrete, decision-driven build (ECS Fargate · greenfield landing zone ·
+> cost-lean pilot · GitHub Actions + CloudWatch/OTel) is specified in
+> [`INFRASTRUCTURE.md`](./INFRASTRUCTURE.md).
+
 ## Layout
 
 ```
