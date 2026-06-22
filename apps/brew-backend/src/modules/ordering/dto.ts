@@ -17,6 +17,7 @@ export class CreateOrderDto {
   @IsOptional() @IsString() tableNumber?: string;
   @IsOptional() @IsString() scheduledFor?: string;
   @IsOptional() @IsString() customerId?: string;
+  @IsOptional() @IsString() customerName?: string;
   @IsArray() @ValidateNested({ each: true }) @Type(() => OrderItemInputDto)
   items!: OrderItemInputDto[];
 }

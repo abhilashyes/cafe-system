@@ -20,15 +20,24 @@ export class LoyaltyService implements OnModuleInit {
   ];
   private readonly accounts = new Map<string, LoyaltyAccount>();
   private readonly ledger: LoyaltyLedgerEntry[] = [];
+  /** orderId → customerId, learned from OrderPlaced so capture can accrue. */
+  private readonly orderCustomer = new Map<string, string>();
 
   constructor(private readonly events: EventBus) {}
 
   onModuleInit(): void {
-    // React to captured payments — accrue stars (the spend-based earn rule).
+    // Learn which customer an order belongs to (Loyalty stays decoupled from Ordering).
+    this.events.subscribe(DomainEvents.OrderPlaced, (evt) => {
+      const data = evt.data as { orderId: string; customerId?: string };
+      if (data.customerId) this.orderCustomer.set(data.orderId, data.customerId);
+    });
+
+    // Accrue stars on captured payment (the spend-based earn rule).
     this.events.subscribe(DomainEvents.PaymentCaptured, async (evt) => {
-      const data = evt.data as { orderId: string; customerId?: string; amountPaise?: number };
-      if (!data.customerId) return;
-      await this.accrue(data.customerId, data.amountPaise ?? 0, data.orderId, evt.storeId);
+      const data = evt.data as { orderId: string; amountPaise?: number };
+      const customerId = this.orderCustomer.get(data.orderId);
+      if (!customerId) return; // guest checkout — nothing to accrue
+      await this.accrue(customerId, data.amountPaise ?? 0, data.orderId, evt.storeId);
     });
   }
 

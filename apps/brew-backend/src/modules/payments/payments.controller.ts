@@ -14,7 +14,7 @@ export class PaymentsController {
   @UseGuards(CognitoGuard, RbacGuard)
   @RequirePermissions('payment:create')
   create(
-    @Body() body: { orderId: string; method: any; amountPaise: number },
+    @Body() body: { orderId: string; storeId: string; method: any; amountPaise: number },
     @Headers('idempotency-key') idempotencyKey: string,
   ) {
     return this.payments.create(body, idempotencyKey);

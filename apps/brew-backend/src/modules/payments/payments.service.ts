@@ -9,6 +9,8 @@ import { PaymentAdapter } from '../../common/adapters/payment.adapter';
 export class PaymentsService {
   private readonly byId = new Map<string, Payment>();
   private readonly byIdempotencyKey = new Map<string, string>();
+  /** storeId is needed to scope the PaymentCaptured event but isn't on Payment. */
+  private readonly storeOf = new Map<string, string>();
 
   constructor(
     private readonly gateway: PaymentAdapter,
@@ -16,7 +18,7 @@ export class PaymentsService {
   ) {}
 
   async create(
-    input: { orderId: string; method: Payment['method']; amountPaise: number },
+    input: { orderId: string; storeId: string; method: Payment['method']; amountPaise: number },
     idempotencyKey: string,
   ): Promise<Payment> {
     // Idempotency: same key returns the same payment (prevents double-charge).
@@ -41,6 +43,10 @@ export class PaymentsService {
     };
     this.byId.set(payment.id, payment);
     this.byIdempotencyKey.set(idempotencyKey, payment.id);
+    this.storeOf.set(payment.id, input.storeId);
+
+    // Cash is captured at the counter — emit immediately (no gateway round-trip).
+    if (payment.status === 'CAPTURED') await this.emitCaptured(payment);
     return payment;
   }
 
@@ -48,16 +54,21 @@ export class PaymentsService {
     if (!this.gateway.verifyWebhookSignature(rawBody, signature)) {
       throw new BadRequestException('Invalid webhook signature');
     }
-    const evt = JSON.parse(rawBody) as { gatewayOrderId?: string; storeId?: string };
+    const evt = JSON.parse(rawBody) as { gatewayOrderId?: string; gatewayPaymentId?: string };
     const payment = [...this.byId.values()].find((p) => p.gatewayOrderId === evt.gatewayOrderId);
-    if (!payment) return;
+    if (!payment || payment.status === 'CAPTURED') return; // idempotent on replay
     payment.status = 'CAPTURED';
+    if (evt.gatewayPaymentId) payment.gatewayPaymentId = evt.gatewayPaymentId;
+    await this.emitCaptured(payment);
+  }
+
+  private async emitCaptured(payment: Payment): Promise<void> {
     await this.events.publish({
       name: DomainEvents.PaymentCaptured,
-      storeId: evt.storeId ?? 'unknown',
+      storeId: this.storeOf.get(payment.id) ?? 'unknown',
       occurredAt: new Date().toISOString(),
       eventId: randomUUID(),
-      data: { paymentId: payment.id, orderId: payment.orderId },
+      data: { paymentId: payment.id, orderId: payment.orderId, amountPaise: payment.amountPaise },
     });
   }
 

@@ -61,6 +61,11 @@ inventory deduct + KOT print → Razorpay UPI pay → webhook (`payment.captured
 loyalty accrues + tier recompute → KDS bump (`order.ready`) → notify → sale in reporting
 with profit & unit economics.
 
+This vertical slice is **executable end-to-end** against the mock adapters and is
+asserted by `apps/brew-backend/src/demo-flow.e2e-spec.ts` (order pricing + GST split,
+payment idempotency, webhook signature check, loyalty accrual, KOT/KDS, mark-ready,
+and recognised revenue in reporting). Run it with `pnpm --filter brew-backend test`.
+
 ## Why modular monolith now
 
 Single deployable, single language (TypeScript) end-to-end, clean module
