@@ -1,0 +1,53 @@
+openapi: 3.1.0
+info:
+  title: Brew Invoicing API
+  version: 1.0.0
+  description: GST-compliant tax invoices (HSN/SAC, GSTIN, CGST/SGST/IGST split).
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /orders/{orderId}/invoice:
+    get:
+      operationId: getOrderInvoice
+      summary: Generate the GST tax invoice for an order
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: GST invoice
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GstInvoice' }
+        '404': { description: Unknown order }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    GstInvoiceLine:
+      type: object
+      properties:
+        name: { type: string }
+        hsnSac: { type: string }
+        quantity: { type: integer }
+        taxableValuePaise: { type: integer }
+        ratePercent: { type: number }
+        cgstPaise: { type: integer }
+        sgstPaise: { type: integer }
+        igstPaise: { type: integer }
+    GstInvoice:
+      type: object
+      properties:
+        invoiceNumber: { type: string }
+        invoiceDate: { type: string, format: date-time }
+        orderId: { type: string }
+        sellerGstin: { type: string }
+        placeOfSupply: { type: string }
+        buyerName: { type: string }
+        lines: { type: array, items: { $ref: '#/components/schemas/GstInvoiceLine' } }
+        taxableValuePaise: { type: integer }
+        cgstPaise: { type: integer }
+        sgstPaise: { type: integer }
+        igstPaise: { type: integer }
+        discountPaise: { type: integer }
+        grandTotalPaise: { type: integer }
+        currency: { type: string, enum: [INR] }

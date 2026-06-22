@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { LoyaltyService } from './loyalty.service';
 
@@ -10,6 +10,16 @@ export class LoyaltyController {
   @Get('tiers')
   tiers() {
     return this.loyalty.listTiers();
+  }
+
+  @Get('rewards')
+  rewards() {
+    return this.loyalty.listRewards();
+  }
+
+  @Post('redeem')
+  redeem(@Body() body: { customerId: string; rewardId: string; orderId?: string }) {
+    return this.loyalty.redeem(body.customerId, body.rewardId, body.orderId);
   }
 
   @Get('accounts/:customerId')

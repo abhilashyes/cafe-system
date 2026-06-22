@@ -6,18 +6,33 @@ import {
   type ConsentRecord,
   type DataSubjectRequest,
   type DsrType,
+  type RetentionPolicy,
 } from '@brew/contracts';
 import { EventBus } from '../../common/events/event-bus';
+import { OrderingService } from '../ordering/ordering.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 const NOTICE_VERSION = '2024-01';
 
-/** Privacy & Consent (DPDP Act 2023) — consent ledger, DSRs, retention. */
+const RETENTION_POLICIES: RetentionPolicy[] = [
+  { dataCategory: 'order', retainDays: null, action: 'ANONYMIZE' }, // financial: statutory
+  { dataCategory: 'payment', retainDays: null, action: 'ANONYMIZE' },
+  { dataCategory: 'marketing_profile', retainDays: 365, action: 'DELETE' },
+  { dataCategory: 'device_token', retainDays: 540, action: 'DELETE' },
+  { dataCategory: 'consent_record', retainDays: 2555, action: 'DELETE' }, // ~7y evidentiary
+];
+
+/** Privacy & Consent (DPDP Act 2023) — consent ledger, DSRs, export, erasure. */
 @Injectable()
 export class PrivacyService {
   private readonly consents: ConsentRecord[] = [];
   private readonly dsrs: DataSubjectRequest[] = [];
 
-  constructor(private readonly events: EventBus) {}
+  constructor(
+    private readonly events: EventBus,
+    private readonly ordering: OrderingService,
+    private readonly loyalty: LoyaltyService,
+  ) {}
 
   getConsents(customerId: string): ConsentRecord[] {
     return this.consents.filter((c) => c.customerId === customerId);
@@ -63,5 +78,37 @@ export class PrivacyService {
     };
     this.dsrs.push(dsr);
     return dsr;
+  }
+
+  listRetentionPolicies(): RetentionPolicy[] {
+    return RETENTION_POLICIES;
+  }
+
+  /** Data portability — aggregate everything held about a data principal. */
+  exportData(customerId: string) {
+    return {
+      customerId,
+      exportedAt: new Date().toISOString(),
+      consents: this.getConsents(customerId),
+      loyalty: {
+        account: this.loyalty.getAccount(customerId),
+        ledger: this.loyalty.getLedger(customerId),
+      },
+      orders: this.ordering.listByCustomer(customerId),
+    };
+  }
+
+  /**
+   * Right to erasure: withdraw consents and pseudonymize the customer on retained
+   * financial records (kept per tax law). Records a fulfilled ERASURE DSR.
+   */
+  async erase(customerId: string) {
+    for (const purpose of ['TRANSACTIONAL', 'MARKETING', 'ANALYTICS'] as ConsentPurpose[]) {
+      if (this.hasConsent(customerId, purpose)) await this.setConsent(customerId, purpose, false);
+    }
+    const ordersAnonymized = this.ordering.anonymizeCustomer(customerId);
+    const dsr = this.createDsr(customerId, 'ERASURE');
+    dsr.status = 'FULFILLED';
+    return { customerId, ordersAnonymized, status: 'ERASED' as const };
   }
 }

@@ -20,6 +20,11 @@ paths:
       parameters:
         - { name: customerId, in: path, required: true, schema: { type: string } }
       responses: { '200': { description: Ledger entries } }
+  /loyalty/rewards:
+    get:
+      operationId: listRewards
+      summary: Redeemable rewards catalog
+      responses: { '200': { description: Active rewards } }
   /loyalty/redeem:
     post:
       operationId: redeemReward

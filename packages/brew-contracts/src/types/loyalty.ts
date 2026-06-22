@@ -31,6 +31,8 @@ export interface Reward {
   id: Id;
   name: string;
   costStars: number;
+  /** Discount applied to the order when this reward is redeemed (paise). */
+  discountPaise: number;
   active: boolean;
 }
 

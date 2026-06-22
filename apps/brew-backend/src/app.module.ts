@@ -11,6 +11,8 @@ import { KotModule } from './modules/kot/kot.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
+import { InvoicingModule } from './modules/invoicing/invoicing.module';
+import { ProcurementModule } from './modules/procurement/procurement.module';
 
 /**
  * Modular monolith root. Each module owns its schema/namespace and communicates
@@ -30,6 +32,8 @@ import { PrivacyModule } from './modules/privacy/privacy.module';
     ReportingModule,
     NotificationsModule,
     PrivacyModule,
+    InvoicingModule,
+    ProcurementModule,
   ],
   controllers: [HealthController],
 })

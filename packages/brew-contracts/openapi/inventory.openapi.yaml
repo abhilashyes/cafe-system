@@ -28,9 +28,22 @@ paths:
                 quantity: { type: number }
                 reason: { type: string }
       responses: { '201': { description: Logged } }
+  /suppliers:
+    get: { operationId: listSuppliers, responses: { '200': { description: Suppliers } } }
   /purchase-orders:
     get: { operationId: listPurchaseOrders, responses: { '200': { description: POs } } }
-    post: { operationId: createPurchaseOrder, responses: { '201': { description: Created (approval workflow) } } }
+    post: { operationId: createPurchaseOrder, responses: { '201': { description: Created (DRAFT) } } }
+  /purchase-orders/{id}/approve:
+    post:
+      operationId: approvePurchaseOrder
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { '201': { description: Approved } }
+  /purchase-orders/{id}/receive:
+    post:
+      operationId: receivePurchaseOrder
+      summary: Goods receiving (with discrepancy handling) — increments stock
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { '201': { description: Received } }
   /transfers:
     post: { operationId: createTransfer, responses: { '201': { description: Inter-store transfer raised } } }
 components:

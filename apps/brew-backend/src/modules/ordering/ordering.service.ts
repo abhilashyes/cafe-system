@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { DomainEvents, type Order, type OrderItem, type OrderTotals } from '@brew/contracts';
 import { EventBus } from '../../common/events/event-bus';
 import { CatalogService } from '../catalog/catalog.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 export interface CreateOrderInput {
   storeId: string;
@@ -12,6 +13,7 @@ export interface CreateOrderInput {
   scheduledFor?: string;
   customerId?: string;
   customerName?: string;
+  rewardId?: string;
   items: Array<{ productId: string; quantity: number; modifierOptionIds?: string[] }>;
 }
 
@@ -28,6 +30,7 @@ export class OrderingService {
   constructor(
     private readonly events: EventBus,
     private readonly catalog: CatalogService,
+    private readonly loyalty: LoyaltyService,
   ) {}
 
   async create(input: CreateOrderInput): Promise<Order> {
@@ -35,6 +38,14 @@ export class OrderingService {
     const id = randomUUID();
     const items = input.items.map((it) => this.priceItem(input.storeId, it));
     const totals = this.computeTotals(items, input.storeId);
+
+    // Redeem a loyalty reward at checkout → discount applied to the grand total.
+    if (input.rewardId) {
+      if (!input.customerId) throw new BadRequestException('rewardId requires customerId');
+      const { discountPaise } = this.loyalty.redeem(input.customerId, input.rewardId, id);
+      totals.discountPaise = Math.min(discountPaise, totals.grandTotalPaise);
+      totals.grandTotalPaise -= totals.discountPaise;
+    }
 
     const order: Order = {
       id,
@@ -134,6 +145,27 @@ export class OrderingService {
 
   get(id: string): Order | undefined {
     return this.orders.get(id);
+  }
+
+  /** All orders for a customer (used by the Privacy data-export flow). */
+  listByCustomer(customerId: string): Order[] {
+    return [...this.orders.values()].filter((o) => o.customerId === customerId);
+  }
+
+  /**
+   * DPDP erasure: pseudonymize the customer on their orders. Financial figures
+   * (amounts, GST) are retained per tax law; the identity is scrubbed.
+   */
+  anonymizeCustomer(customerId: string): number {
+    let count = 0;
+    for (const order of this.orders.values()) {
+      if (order.customerId === customerId) {
+        order.customerId = undefined;
+        order.customerName = 'REDACTED';
+        count++;
+      }
+    }
+    return count;
   }
 
   async markReady(id: string): Promise<Order | undefined> {

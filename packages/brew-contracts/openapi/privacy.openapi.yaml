@@ -41,9 +41,29 @@ paths:
       responses: { '201': { description: DSR created } }
   /privacy/export:
     get:
-      operationId: exportMyData
-      summary: Data portability — download the customer's data
-      responses: { '200': { description: Data export bundle } }
+      operationId: exportData
+      summary: Data portability — export a data principal's data (DPO-scoped)
+      parameters:
+        - { name: customerId, in: query, required: true, schema: { type: string } }
+      responses: { '200': { description: Data export bundle (consents, loyalty, orders) } }
+  /privacy/erase:
+    post:
+      operationId: eraseData
+      summary: Right to erasure — withdraw consent + pseudonymize retained records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId]
+              properties: { customerId: { type: string } }
+      responses: { '201': { description: Erased / anonymized } }
+  /privacy/retention:
+    get:
+      operationId: listRetentionPolicies
+      summary: Configured per-category retention policies
+      responses: { '200': { description: Retention policies } }
 components:
   securitySchemes:
     cognito: { type: http, scheme: bearer, bearerFormat: JWT }

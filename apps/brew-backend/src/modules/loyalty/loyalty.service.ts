@@ -1,10 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   DomainEvents,
   type LoyaltyAccount,
   type LoyaltyLedgerEntry,
   type MembershipTier,
+  type Reward,
 } from '@brew/contracts';
 import { EventBus } from '../../common/events/event-bus';
 
@@ -17,6 +18,10 @@ export class LoyaltyService implements OnModuleInit {
     { id: 't3', name: 'Gold', rank: 3, qualifyingThreshold: 1500000, accrualMultiplier: 1.5, benefits: ['Free refills'] },
     { id: 't4', name: 'Platinum', rank: 4, qualifyingThreshold: 4000000, accrualMultiplier: 1.75, benefits: ['Priority pickup'] },
     { id: 't5', name: 'Black', rank: 5, qualifyingThreshold: 10000000, accrualMultiplier: 2, benefits: ['Concierge'] },
+  ];
+  private readonly rewards: Reward[] = [
+    { id: 'rw_free_coffee', name: 'Free brewed coffee', costStars: 150, discountPaise: 15000, active: true },
+    { id: 'rw_free_pastry', name: 'Free pastry', costStars: 200, discountPaise: 18000, active: true },
   ];
   private readonly accounts = new Map<string, LoyaltyAccount>();
   private readonly ledger: LoyaltyLedgerEntry[] = [];
@@ -76,6 +81,34 @@ export class LoyaltyService implements OnModuleInit {
 
   listTiers(): MembershipTier[] {
     return this.tiers;
+  }
+
+  listRewards(): Reward[] {
+    return this.rewards.filter((r) => r.active);
+  }
+
+  /**
+   * Redeem a reward: deducts stars (REDEMPTION ledger entry) and returns the
+   * discount to apply to the order. Throws 402 if the balance is insufficient.
+   */
+  redeem(customerId: string, rewardId: string, orderId?: string): { discountPaise: number } {
+    const reward = this.rewards.find((r) => r.id === rewardId && r.active);
+    if (!reward) throw new BadRequestException('Unknown reward');
+    const account = this.getOrCreate(customerId);
+    if (account.balanceStars < reward.costStars) {
+      throw new HttpException('Insufficient stars', HttpStatus.PAYMENT_REQUIRED);
+    }
+    account.balanceStars -= reward.costStars;
+    this.ledger.push({
+      id: randomUUID(),
+      customerId,
+      type: 'REDEMPTION',
+      stars: -reward.costStars,
+      orderId,
+      rewardId,
+      createdAt: new Date().toISOString(),
+    });
+    return { discountPaise: reward.discountPaise };
   }
 
   private getOrCreate(customerId: string): LoyaltyAccount {

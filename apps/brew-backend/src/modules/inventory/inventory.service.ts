@@ -125,4 +125,24 @@ export class InventoryService implements OnModuleInit {
     levels.set(ingredientId, Math.max(0, (levels.get(ingredientId) ?? 0) - quantity));
     await this.checkDepletion(storeId, new Set([ingredientId]));
   }
+
+  /** Goods receiving (e.g. a PO line arriving) — increments on-hand stock. */
+  receiveStock(storeId: string, ingredientId: string, quantity: number): void {
+    if (!this.ingredients.has(ingredientId)) throw new BadRequestException('Unknown ingredient');
+    if (quantity <= 0) throw new BadRequestException('Quantity must be positive');
+    const levels = this.storeStock(storeId);
+    levels.set(ingredientId, (levels.get(ingredientId) ?? 0) + quantity);
+  }
+
+  /** Inter-store transfer: deduct at source, add at destination. */
+  async transfer(fromStoreId: string, toStoreId: string, ingredientId: string, quantity: number): Promise<void> {
+    if (!this.ingredients.has(ingredientId)) throw new BadRequestException('Unknown ingredient');
+    const source = this.storeStock(fromStoreId);
+    if ((source.get(ingredientId) ?? 0) < quantity) {
+      throw new BadRequestException('Insufficient stock at source store');
+    }
+    source.set(ingredientId, (source.get(ingredientId) ?? 0) - quantity);
+    this.receiveStock(toStoreId, ingredientId, quantity);
+    await this.checkDepletion(fromStoreId, new Set([ingredientId]));
+  }
 }

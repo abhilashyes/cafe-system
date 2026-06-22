@@ -16,12 +16,14 @@ own service** without redesign.
 | `catalog` | Products, modifiers, recipes (BOM), GST/HSN, store availability |
 | `ordering` | Cart/order lifecycle, dine-in/takeaway, pre-order → emits `OrderPlaced` |
 | `payments` | Razorpay (via `PaymentAdapter`), idempotency, webhook verify, refunds |
-| `inventory` | Recipe-based deduction (on `OrderPlaced`), wastage, POs, transfers |
-| `loyalty` | Stars ledger + 5 tiers; accrues on `PaymentCaptured` |
-| `kot` | KOT sticker payloads, station print jobs, KDS state |
-| `reporting` | Sales, profit (COGS from BOM), unit economics |
+| `inventory` | Recipe-based deduction (on `OrderPlaced`), wastage, goods receiving, transfers |
+| `loyalty` | Stars ledger + 5 tiers; accrues on `PaymentCaptured`; rewards catalog + redemption (incl. redeem-at-checkout) |
+| `kot` | KOT sticker payloads, station print jobs, KDS state + WebSocket |
+| `reporting` | Sales, profit (COGS from BOM), item profitability, unit economics |
 | `notifications` | SMS/push/email; marketing gated on DPDP consent |
-| `privacy` | Consent ledger + Data Subject Requests (DPDP) |
+| `privacy` | Consent ledger, DSRs, data export (portability) + erasure, retention policies (DPDP) |
+| `invoicing` | GST tax invoices for orders (HSN/SAC, GSTIN, CGST/SGST/IGST) |
+| `procurement` | Suppliers, purchase orders (create → approve → receive → stock), inter-store transfers |
 
 ## Cross-cutting (`src/common`)
 

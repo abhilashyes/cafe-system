@@ -12,10 +12,14 @@ const DEV_PERMISSIONS = [
   'kds:bump',
   'inventory:read',
   'inventory:write',
+  'po:create',
+  'po:approve',
   'report:read:store',
   'report:read:region',
   'report:read:org',
   'report:export',
+  'privacy:dsr:manage',
+  'privacy:audit:read',
 ];
 
 /**

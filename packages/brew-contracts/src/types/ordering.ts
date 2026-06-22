@@ -59,6 +59,8 @@ export interface CreateOrderInput {
   scheduledFor?: string;
   customerId?: Id;
   customerName?: string;
+  /** Optional loyalty reward redeemed at checkout (applies a discount). */
+  rewardId?: Id;
   items: Array<{ productId: Id; quantity: number; modifierOptionIds?: Id[] }>;
 }
 
