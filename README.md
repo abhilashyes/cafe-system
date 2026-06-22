@@ -70,6 +70,16 @@ pnpm --filter brew-pos-web dev           # POS web (Vite)
 pnpm --filter brew-admin-global dev      # global admin (Vite)
 ```
 
+## CI/CD
+
+- **`.github/workflows/ci.yml`** — on every PR/push: `pnpm install → lint → test → build`.
+- **`.github/workflows/deploy-backend.yml`** — on push to `main` (backend/contracts
+  changes) or manual: assumes the AWS deploy role via **GitHub OIDC** (no static
+  keys), builds `apps/brew-backend/Dockerfile`, pushes to ECR, registers a new ECS
+  task revision, and rolls out the Fargate service.
+  - Requires repo secret **`AWS_DEPLOY_ROLE_ARN`** = the `github_deploy_role_arn`
+    output from `apps/brew-infra/environments/dev`.
+
 ## Documentation
 
 - `docs/architecture/overview.md` — architecture, hierarchy, event catalog, diagram
