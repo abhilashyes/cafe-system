@@ -20,6 +20,29 @@ export interface KotStickerPayload {
   barcode?: string;
 }
 
+/** A live KDS ticket item (one per order line). */
+export interface KdsTicketItem {
+  itemId: Id;
+  productId: Id;
+  name: string;
+  quantity: number;
+  station: StationType;
+  modifiers: string[];
+  status: 'PENDING' | 'READY';
+}
+
+/** A live KDS ticket (one per order) shown on the kitchen/bar display. */
+export interface KdsTicket {
+  orderId: Id;
+  storeId: Id;
+  pickupCode: string;
+  fulfilment: FulfilmentType;
+  tableNumber?: string;
+  customerName?: string;
+  createdAt: string;
+  items: KdsTicketItem[];
+}
+
 export type PrinterProtocol = 'ESC_POS' | 'ZPL';
 
 export interface PrinterDevice {
