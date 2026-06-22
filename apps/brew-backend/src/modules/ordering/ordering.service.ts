@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DomainEvents, type Order, type OrderItem, type OrderTotals } from '@brew/contracts';
 import { EventBus } from '../../common/events/event-bus';
@@ -33,7 +33,7 @@ export class OrderingService {
   async create(input: CreateOrderInput): Promise<Order> {
     if (input.items.length === 0) throw new BadRequestException('Order has no items');
     const id = randomUUID();
-    const items = input.items.map((it) => this.priceItem(it));
+    const items = input.items.map((it) => this.priceItem(input.storeId, it));
     const totals = this.computeTotals(items, input.storeId);
 
     const order: Order = {
@@ -62,7 +62,12 @@ export class OrderingService {
         orderId: id,
         customerId: order.customerId,
         channel: order.channel,
-        items: order.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: order.items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          // Taxable (ex-GST) revenue for this line — used by item profitability.
+          lineRevenuePaise: i.unitPricePaise * i.quantity,
+        })),
         grandTotalPaise: totals.grandTotalPaise,
       },
     });
@@ -70,13 +75,16 @@ export class OrderingService {
   }
 
   /** Price a single line: base + modifier deltas, resolved against Catalog. */
-  private priceItem(input: {
-    productId: string;
-    quantity: number;
-    modifierOptionIds?: string[];
-  }): OrderItem {
+  private priceItem(
+    storeId: string,
+    input: { productId: string; quantity: number; modifierOptionIds?: string[] },
+  ): OrderItem {
     const product = this.catalog.getProduct(input.productId);
     if (!product) throw new BadRequestException(`Unknown product ${input.productId}`);
+    // Block ordering of 86'd / unavailable items at this store.
+    if (!this.catalog.isAvailable(storeId, input.productId)) {
+      throw new ConflictException(`${product.name} is unavailable at this store`);
+    }
 
     const modifiers = (input.modifierOptionIds ?? []).map((optionId) => {
       const opt = this.catalog.findModifierOption(input.productId, optionId);

@@ -18,11 +18,11 @@ export class InventoryController {
 
   @Post('stores/:storeId/wastage')
   @RequirePermissions('inventory:write')
-  wastage(
+  async wastage(
     @Param('storeId') storeId: string,
     @Body() body: { ingredientId: string; quantity: number; reason: string },
   ) {
-    this.inventory.logWastage(storeId, body.ingredientId, body.quantity, body.reason);
+    await this.inventory.logWastage(storeId, body.ingredientId, body.quantity, body.reason);
     return { ok: true };
   }
 }

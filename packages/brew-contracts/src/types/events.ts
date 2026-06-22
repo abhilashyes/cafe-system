@@ -11,6 +11,7 @@ export const DomainEvents = {
   OrderReady: 'order.ready',
   OrderPickedUp: 'order.picked_up',
   InventoryDeducted: 'inventory.deducted',
+  InventoryOutOfStock: 'inventory.out_of_stock',
   LoyaltyAccrued: 'loyalty.accrued',
   KotPrintRequested: 'kot.print_requested',
   ConsentChanged: 'privacy.consent_changed',

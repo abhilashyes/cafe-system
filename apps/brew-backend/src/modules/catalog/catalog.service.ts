@@ -1,9 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { Product } from '@brew/contracts';
+import { DomainEvents } from '@brew/contracts';
+import { EventBus } from '../../common/events/event-bus';
+
+export interface MenuItem extends Product {
+  /** Store-resolved availability (false = 86'd). */
+  available: boolean;
+  /** Store-resolved price (override or base). */
+  pricePaise: number;
+}
 
 /** Catalog/Menu — products, modifiers, recipes (BOM), GST/HSN, store availability. */
 @Injectable()
-export class CatalogService {
+export class CatalogService implements OnModuleInit {
+  private readonly logger = new Logger(CatalogService.name);
   private readonly products: Product[] = [
     {
       id: 'prod_latte',
@@ -50,17 +60,37 @@ export class CatalogService {
     },
   ];
 
-  /** Store-aware menu (availability/pricing can vary by store). */
-  getStoreMenu(_storeId: string): Product[] {
-    return this.products;
+  /** storeId → productId → { available, pricePaiseOverride }. */
+  private readonly overrides = new Map<string, Map<string, { available: boolean; pricePaise?: number }>>();
+
+  constructor(private readonly events: EventBus) {}
+
+  onModuleInit(): void {
+    // When an ingredient runs out, 86 every product whose recipe needs it.
+    this.events.subscribe(DomainEvents.InventoryOutOfStock, (evt) => {
+      const { ingredientId } = evt.data as { ingredientId: string };
+      for (const product of this.products) {
+        if (product.recipe.some((line) => line.ingredientId === ingredientId)) {
+          this.setAvailability(evt.storeId, product.id, false);
+          this.logger.warn(`86'd ${product.name} at ${evt.storeId} (out of ${ingredientId})`);
+        }
+      }
+    });
   }
 
-  /** Look up a single product (used by Ordering to price + route items). */
+  /** Store-aware menu with availability + price resolved per store. */
+  getStoreMenu(storeId: string): MenuItem[] {
+    return this.products.map((p) => ({
+      ...p,
+      available: this.isAvailable(storeId, p.id),
+      pricePaise: this.storeOverride(storeId, p.id)?.pricePaise ?? p.basePricePaise,
+    }));
+  }
+
   getProduct(productId: string): Product | undefined {
     return this.products.find((p) => p.id === productId);
   }
 
-  /** Resolve a modifier option to its name + price delta. */
   findModifierOption(
     productId: string,
     optionId: string,
@@ -75,7 +105,20 @@ export class CatalogService {
     return undefined;
   }
 
-  setAvailability(_storeId: string, _productId: string, _available: boolean): void {
-    // MOCK: persist a StoreProductOverride in a full build (feeds 86 handling).
+  isAvailable(storeId: string, productId: string): boolean {
+    return this.storeOverride(storeId, productId)?.available ?? true;
+  }
+
+  setAvailability(storeId: string, productId: string, available: boolean): void {
+    let store = this.overrides.get(storeId);
+    if (!store) {
+      store = new Map();
+      this.overrides.set(storeId, store);
+    }
+    store.set(productId, { ...store.get(productId), available });
+  }
+
+  private storeOverride(storeId: string, productId: string) {
+    return this.overrides.get(storeId)?.get(productId);
   }
 }

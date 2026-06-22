@@ -2,6 +2,7 @@
 export * from './types/hierarchy';
 export * from './types/identity';
 export * from './types/catalog';
+export * from './types/inventory';
 export * from './types/ordering';
 export * from './types/payments';
 export * from './types/loyalty';

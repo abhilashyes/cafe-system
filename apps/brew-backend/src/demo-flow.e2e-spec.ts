@@ -111,7 +111,7 @@ describe('Demo flow (e2e)', () => {
     const readyOrder = await http.get(`/v1/orders/${order.id}`).set(auth).expect(200);
     expect(readyOrder.body.status).toBe('READY');
 
-    // 8. Sale shows up in reporting with recognised revenue (captured only).
+    // 8. Sale shows up in reporting with recognised revenue, COGS and profit.
     const report = await http
       .get(`/v1/reports/sales?scopeLevel=STORE&scopeId=${storeId}`)
       .set(auth)
@@ -119,6 +119,18 @@ describe('Demo flow (e2e)', () => {
     expect(report.body.orders).toBe(1);
     expect(report.body.revenuePaise).toBe(order.totals.grandTotalPaise);
     expect(report.body.byChannel.MOBILE_PREORDER).toBe(1);
+    // COGS from BOM: latte 18g×50 + 200ml×6 = 2100; croissant 1×6000 = 6000.
+    expect(report.body.cogsPaise).toBe(8100);
+    // Profit = net (ex-GST) revenue 50000 − COGS 8100.
+    expect(report.body.grossProfitPaise).toBe(41900);
+
+    // 9. Item profitability insights are computed from captured sales.
+    const profitability = await http
+      .get('/v1/reports/item-profitability')
+      .set(auth)
+      .expect(200);
+    expect(profitability.body.mostProfitable.length).toBeGreaterThan(0);
+    expect(profitability.body.mostProfitable[0]).toHaveProperty('marginPercent');
   });
 
   it('rejects a webhook with a bad signature', async () => {
@@ -137,5 +149,38 @@ describe('Demo flow (e2e)', () => {
       .set('Idempotency-Key', 'order-key-rbac')
       .send({ storeId, channel: 'WALK_IN', fulfilment: 'TAKEAWAY', items: [{ productId: 'prod_latte', quantity: 1 }] })
       .expect(403);
+  });
+
+  it('86s a product when its ingredient is exhausted and blocks new orders', async () => {
+    const http = request(app.getHttpServer());
+    const store = 'store_86';
+
+    // Exhaust croissant stock (opening 200 units) via wastage → out-of-stock event.
+    await http
+      .post(`/v1/stores/${store}/wastage`)
+      .set(auth)
+      .send({ ingredientId: 'ing_croissant', quantity: 200, reason: 'spoilage' })
+      .expect(201);
+
+    // Menu now shows the croissant as unavailable (86'd) at this store.
+    const menu = await http.get(`/v1/stores/${store}/menu`).set(auth).expect(200);
+    const croissant = menu.body.find((m: { id: string }) => m.id === 'prod_croissant');
+    expect(croissant.available).toBe(false);
+
+    // Ordering the 86'd item is blocked...
+    await http
+      .post('/v1/orders')
+      .set(auth)
+      .set('Idempotency-Key', 'order-86')
+      .send({ storeId: store, channel: 'WALK_IN', fulfilment: 'TAKEAWAY', items: [{ productId: 'prod_croissant', quantity: 1 }] })
+      .expect(409);
+
+    // ...but a product with stock is still orderable.
+    await http
+      .post('/v1/orders')
+      .set(auth)
+      .set('Idempotency-Key', 'order-86b')
+      .send({ storeId: store, channel: 'WALK_IN', fulfilment: 'TAKEAWAY', items: [{ productId: 'prod_latte', quantity: 1 }] })
+      .expect(201);
   });
 });
