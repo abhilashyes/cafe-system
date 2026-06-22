@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info:
+  title: Brew Reporting & Analytics API
+  version: 1.0.0
+  description: Sales, profit (revenue − COGS from BOM), unit economics, item profitability, exports. Role-restricted.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /reports/sales:
+    get:
+      operationId: getSalesReport
+      summary: Revenue by store/region/day/hour/channel/payment/item, vs prior period
+      parameters:
+        - { name: scopeLevel, in: query, schema: { type: string, enum: [ORG, REGION, STORE] } }
+        - { name: scopeId, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses: { '200': { description: Sales report } }
+  /reports/item-profitability:
+    get:
+      operationId: getItemProfitability
+      summary: Rank items by margin & volume; flag high-vol-low-margin and drag items
+      responses: { '200': { description: Item profitability insights } }
+  /reports/unit-economics:
+    get:
+      operationId: getUnitEconomics
+      summary: Per-order/per-item contribution margin, AOV, items/order
+      responses: { '200': { description: Unit economics } }
+  /reports/export:
+    get:
+      operationId: exportReport
+      summary: CSV/Excel + GST-ready summaries (figures reconcile to settlement)
+      parameters:
+        - { name: report, in: query, required: true, schema: { type: string } }
+        - { name: format, in: query, schema: { type: string, enum: [csv, xlsx] } }
+      responses: { '200': { description: Export file } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }

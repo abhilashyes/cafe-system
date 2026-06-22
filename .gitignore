@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# env & secrets (NEVER commit — see docs/security)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# logs / os
+*.log
+.DS_Store
+coverage/

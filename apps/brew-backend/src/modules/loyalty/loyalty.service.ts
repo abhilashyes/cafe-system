@@ -1,0 +1,84 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import {
+  DomainEvents,
+  type LoyaltyAccount,
+  type LoyaltyLedgerEntry,
+  type MembershipTier,
+} from '@brew/contracts';
+import { EventBus } from '../../common/events/event-bus';
+
+/** Loyalty — redeemable "stars" ledger + 5 spend-based tiers. */
+@Injectable()
+export class LoyaltyService implements OnModuleInit {
+  private readonly tiers: MembershipTier[] = [
+    { id: 't1', name: 'Welcome', rank: 1, qualifyingThreshold: 0, accrualMultiplier: 1, benefits: [] },
+    { id: 't2', name: 'Green', rank: 2, qualifyingThreshold: 500000, accrualMultiplier: 1.25, benefits: ['Birthday treat'] },
+    { id: 't3', name: 'Gold', rank: 3, qualifyingThreshold: 1500000, accrualMultiplier: 1.5, benefits: ['Free refills'] },
+    { id: 't4', name: 'Platinum', rank: 4, qualifyingThreshold: 4000000, accrualMultiplier: 1.75, benefits: ['Priority pickup'] },
+    { id: 't5', name: 'Black', rank: 5, qualifyingThreshold: 10000000, accrualMultiplier: 2, benefits: ['Concierge'] },
+  ];
+  private readonly accounts = new Map<string, LoyaltyAccount>();
+  private readonly ledger: LoyaltyLedgerEntry[] = [];
+
+  constructor(private readonly events: EventBus) {}
+
+  onModuleInit(): void {
+    // React to captured payments — accrue stars (the spend-based earn rule).
+    this.events.subscribe(DomainEvents.PaymentCaptured, async (evt) => {
+      const data = evt.data as { orderId: string; customerId?: string; amountPaise?: number };
+      if (!data.customerId) return;
+      await this.accrue(data.customerId, data.amountPaise ?? 0, data.orderId, evt.storeId);
+    });
+  }
+
+  private async accrue(customerId: string, amountPaise: number, orderId: string, storeId: string) {
+    const account = this.getOrCreate(customerId);
+    const tier = this.tiers.find((t) => t.id === account.tierId)!;
+    // Earn rate: 1 star per ₹10, times tier multiplier.
+    const stars = Math.floor((amountPaise / 1000) * tier.accrualMultiplier);
+    account.balanceStars += stars;
+    account.qualifyingSpend += amountPaise;
+    account.tierId = this.resolveTier(account.qualifyingSpend).id;
+    this.ledger.push({
+      id: randomUUID(),
+      customerId,
+      type: 'ACCRUAL',
+      stars,
+      orderId,
+      createdAt: new Date().toISOString(),
+    });
+    await this.events.publish({
+      name: DomainEvents.LoyaltyAccrued,
+      storeId,
+      occurredAt: new Date().toISOString(),
+      eventId: randomUUID(),
+      data: { customerId, stars, orderId },
+    });
+  }
+
+  getAccount(customerId: string): LoyaltyAccount {
+    return this.getOrCreate(customerId);
+  }
+
+  getLedger(customerId: string): LoyaltyLedgerEntry[] {
+    return this.ledger.filter((e) => e.customerId === customerId);
+  }
+
+  listTiers(): MembershipTier[] {
+    return this.tiers;
+  }
+
+  private getOrCreate(customerId: string): LoyaltyAccount {
+    let acct = this.accounts.get(customerId);
+    if (!acct) {
+      acct = { customerId, tierId: 't1', balanceStars: 0, qualifyingSpend: 0 };
+      this.accounts.set(customerId, acct);
+    }
+    return acct;
+  }
+
+  private resolveTier(qualifyingSpend: number): MembershipTier {
+    return [...this.tiers].reverse().find((t) => qualifyingSpend >= t.qualifyingThreshold) ?? this.tiers[0];
+  }
+}

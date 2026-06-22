@@ -1,0 +1,38 @@
+openapi: 3.1.0
+info:
+  title: Brew Inventory & Procurement API
+  version: 1.0.0
+  description: Per-store stock, recipe-based deduction, purchase orders, suppliers, receiving, transfers, wastage.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /stores/{storeId}/inventory:
+    get:
+      operationId: getStoreInventory
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: On-hand stock, par levels, low-stock flags } }
+  /stores/{storeId}/wastage:
+    post:
+      operationId: logWastage
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ingredientId, quantity, reason]
+              properties:
+                ingredientId: { type: string }
+                quantity: { type: number }
+                reason: { type: string }
+      responses: { '201': { description: Logged } }
+  /purchase-orders:
+    get: { operationId: listPurchaseOrders, responses: { '200': { description: POs } } }
+    post: { operationId: createPurchaseOrder, responses: { '201': { description: Created (approval workflow) } } }
+  /transfers:
+    post: { operationId: createTransfer, responses: { '201': { description: Inter-store transfer raised } } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }

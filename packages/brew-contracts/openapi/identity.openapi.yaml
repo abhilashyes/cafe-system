@@ -1,0 +1,51 @@
+openapi: 3.1.0
+info:
+  title: Brew Identity & Access API
+  version: 1.0.0
+  description: Cognito phone+OTP auth, staff accounts, RBAC roles scoped to the org hierarchy.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /auth/otp/start:
+    post:
+      operationId: startOtp
+      summary: Begin phone+OTP sign-in (delegates to Cognito; OTP throttled to prevent SMS-bombing)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [phone], properties: { phone: { type: string } } }
+      responses: { '200': { description: OTP dispatched }, '429': { description: Throttled } }
+  /auth/otp/verify:
+    post:
+      operationId: verifyOtp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties: { phone: { type: string }, code: { type: string } }
+      responses:
+        '200':
+          description: Tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+  /me:
+    get:
+      operationId: getMe
+      responses: { '200': { description: Current principal + roles } }
+  /roles:
+    get: { operationId: listRoles, responses: { '200': { description: Roles } } }
+    post: { operationId: createRole, responses: { '201': { description: Created } } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }

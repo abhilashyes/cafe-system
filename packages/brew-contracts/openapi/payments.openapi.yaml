@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: Brew Payments API
+  version: 1.0.0
+  description: Razorpay integration — UPI intent/collect/QR, cards/wallets/netbanking, refunds, webhooks.
+servers:
+  - url: https://api.brew.example/v1
+  - url: http://localhost:3000/v1
+security:
+  - cognito: []
+paths:
+  /payments:
+    post:
+      operationId: createPayment
+      summary: Create a Razorpay order for an order (idempotent)
+      parameters:
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePaymentRequest' }
+      responses:
+        '201':
+          description: Payment intent created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Payment' }
+  /payments/{paymentId}/refund:
+    post:
+      operationId: refundPayment
+      summary: Full or partial refund (manager-approved)
+      parameters:
+        - { name: paymentId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amountPaise: { type: integer, description: omit for full refund }
+                reason: { type: string }
+      responses:
+        '200': { description: Refund initiated }
+  /payments/webhook:
+    post:
+      operationId: razorpayWebhook
+      summary: Razorpay webhook receiver — X-Razorpay-Signature verified before trust
+      security: []
+      parameters:
+        - { name: X-Razorpay-Signature, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: Acknowledged }
+        '400': { description: Invalid signature }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    PaymentMethod:
+      type: string
+      enum: [UPI_INTENT, UPI_COLLECT, UPI_QR, CARD, WALLET, NETBANKING, CASH]
+    CreatePaymentRequest:
+      type: object
+      required: [orderId, method, amountPaise]
+      properties:
+        orderId: { type: string }
+        method: { $ref: '#/components/schemas/PaymentMethod' }
+        amountPaise: { type: integer }
+    Payment:
+      type: object
+      properties:
+        id: { type: string }
+        orderId: { type: string }
+        method: { $ref: '#/components/schemas/PaymentMethod' }
+        status:
+          type: string
+          enum: [CREATED, PENDING, CAPTURED, FAILED, REFUNDED, PARTIALLY_REFUNDED]
+        amountPaise: { type: integer }
+        gatewayOrderId: { type: string }

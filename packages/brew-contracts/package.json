@@ -1,0 +1,18 @@
+{
+  "name": "@brew/contracts",
+  "version": "0.1.0",
+  "description": "API-first backbone: OpenAPI 3.1 specs, shared TypeScript types, and a stub SDK consumed by all Project Brew apps.",
+  "license": "UNLICENSED",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "openapi"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"(contracts) no unit tests yet\" && exit 0",
+    "openapi:lint": "echo \"(stub) run spectral/redocly against ./openapi/*.yaml in CI\""
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

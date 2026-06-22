@@ -1,0 +1,57 @@
+openapi: 3.1.0
+info:
+  title: Brew KOT & Fulfilment API
+  version: 1.0.0
+  description: KOT sticker payloads, station routing, print jobs, KDS bump/ready status.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /print-jobs:
+    get:
+      operationId: pollPrintJobs
+      summary: Print agent polls/subscribes for queued jobs for its devices
+      parameters:
+        - { name: deviceId, in: query, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Queued print jobs
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/PrintJob' } }
+  /print-jobs/{jobId}/ack:
+    post:
+      operationId: ackPrintJob
+      summary: Agent reports PRINTED / FAILED (with retry/reprint semantics)
+      parameters:
+        - { name: jobId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { status: { type: string, enum: [PRINTED, FAILED] } } }
+      responses: { '200': { description: Acknowledged } }
+  /kds/{storeId}/tickets:
+    get:
+      operationId: getKdsTickets
+      summary: Station-filtered live ticket lanes for the KDS
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+        - { name: station, in: query, schema: { type: string, enum: [BAR, HOT_KITCHEN, COLD, BAKERY] } }
+      responses: { '200': { description: Tickets } }
+  /kds/items/{itemId}/bump:
+    post:
+      operationId: bumpItem
+      summary: Mark an item ready on KDS — syncs to app + pickup board
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: Bumped } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    PrintJob:
+      type: object
+      properties:
+        id: { type: string }
+        deviceId: { type: string }
+        status: { type: string, enum: [QUEUED, PRINTED, FAILED] }
+        payload: { type: object }
