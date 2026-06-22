@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars and adjust. (terraform.tfvars is gitignored.)
+region          = "ap-south-1"
+name_prefix     = "brew-dev"
+github_repo     = "abhilashyes/cafe-system"
+# After pushing the backend image, set this to the ECR image URI and re-apply
+# (or let CI/CD deploy it):
+# container_image = "<ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/brew-dev-backend:latest"
