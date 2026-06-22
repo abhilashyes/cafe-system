@@ -5,7 +5,10 @@ and Android (§5.1). It is intentionally a **separate repository** and integrate
 with the platform **only via the published `brew-contracts` APIs** — there is no
 code dependency on the backend monorepo.
 
-> Phase 0: placeholder screens wired to the `/v1` API client (`lib/api/brew_api.dart`).
+> **Status:** working vertical slice — phone+OTP login → store menu → cart →
+> place order + UPI checkout → live order tracking → loyalty. Privacy Center and
+> store locator are placeholders. (Flutter SDK isn't in the build sandbox, so the
+> Dart is written compile-ready but `flutter analyze`/`run` must be done locally.)
 
 > **Note on location:** This app is meant to live in its **own repository**
 > (`brew-mobile-customer`). It is currently nested here under `apps/` only because
@@ -14,33 +17,38 @@ code dependency on the backend monorepo.
 > build coupling to the monorepo. Move this folder to a standalone repo when
 > permissions allow; nothing in it imports the monorepo (it talks to `/v1` APIs only).
 
-## Features (screens)
+## Structure
 
-Phone+OTP login (Cognito, no password) · store-aware menu + modifiers · cart &
-Razorpay checkout (UPI intent / cards / wallets) with GST receipt · pre-order &
-dine-in/pickup scheduling · live order tracking + push · loyalty (tier of 5, stars,
-rewards) · **Privacy Center** (DPDP: consent, export, erasure) · store locator.
-
-## Integration
-
-All data flows through the documented `/v1` endpoints in `brew-contracts`. The dev
-backend (`brew-backend`) accepts a mock token and OTP `000000`.
-
-```dart
-final api = BrewApi(baseUrl: 'http://localhost:3000');
-await api.startOtp('+919999999999');
-await api.verifyOtp('+919999999999', '000000');
-final menu = await api.storeMenu('store_1');
 ```
+lib/
+  config.dart          # API base URL + store id (dart-define overridable)
+  models.dart          # MenuItem / Order / Loyalty DTOs + money formatting
+  api/brew_api.dart    # typed client over the /v1 endpoints
+  state/app_state.dart # ChangeNotifier: auth, cart, checkout, loyalty (global)
+  main.dart            # MaterialApp + go_router (auth-gated redirect)
+  screens/             # login, menu, cart, tracking, loyalty, privacy, stores
+```
+
+## Functional flow
+
+Login (phone + OTP) → menu (live store menu, 86 items disabled) → cart (dine-in/
+takeaway + table) → **place order** (`POST /v1/orders`) → **UPI payment**
+(`POST /v1/payments`, shows the returned UPI intent) → **live tracking** (polls
+`GET /v1/orders/:id`) → **loyalty** (`GET /v1/loyalty/accounts/:id`, tier of 5 +
+progress). All data flows through the published `/v1` APIs — no backend internals.
 
 ## Run
 
 ```bash
+# point the app at your backend (Android emulator host = 10.0.2.2):
 flutter pub get
-flutter run            # device/emulator
-flutter analyze        # static analysis
-flutter test           # widget tests
+flutter run --dart-define=BREW_API=http://10.0.2.2:3000   # iOS sim/web: http://localhost:3000
+flutter analyze
+flutter test
 ```
+
+Dev auth: any phone, OTP **`000000`** (mock Cognito). Start the backend first
+(`pnpm --filter brew-backend start:dev`).
 
 ## Security (MASVS-minded)
 
