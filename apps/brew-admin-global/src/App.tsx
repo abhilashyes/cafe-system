@@ -4,6 +4,8 @@ import { Reporting } from './screens/Reporting';
 import { LoyaltyConfig } from './screens/LoyaltyConfig';
 import { Catalog } from './screens/Catalog';
 import { Rbac } from './screens/Rbac';
+import { Org } from './screens/Org';
+import { Procurement } from './screens/Procurement';
 
 /** The Brew Lab — head-office admin shell. */
 const nav: Array<{ path: string; label: string; note?: string }> = [
@@ -95,8 +97,8 @@ export function App() {
           <Route path="/loyalty" element={<LoyaltyConfig />} />
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/rbac" element={<Rbac />} />
-          <Route path="/org" element={<Placeholder label="Org & Stores" note={nav[4].note} />} />
-          <Route path="/procurement" element={<Placeholder label="Procurement" note={nav[5].note} />} />
+          <Route path="/org" element={<Org />} />
+          <Route path="/procurement" element={<Procurement />} />
           <Route path="/privacy" element={<Placeholder label="Privacy Admin" note={nav[6].note} />} />
         </Routes>
       </main>
