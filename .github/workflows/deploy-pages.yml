@@ -49,10 +49,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @brew/contracts build
 
-      - name: Build POS (hash router, subpath base)
+      # VITE_DEMO=true → fully client-side (seeded in-memory data, no backend).
+      - name: Build POS (hash router, subpath base, demo data)
         run: pnpm --filter brew-pos-web exec vite build --base="$BASE/pos/"
         env:
           VITE_USE_HASH_ROUTER: "true"
+          VITE_DEMO: "true"
           VITE_API_BASE_URL: ${{ env.BREW_API }}
           VITE_STORE_ID: store_1
       - name: Build admin (hash router, subpath base)
@@ -69,7 +71,8 @@ jobs:
         run: |
           flutter create . --org com.projectbrew --project-name brew_mobile_customer --platforms=web
           flutter pub get
-          flutter build web --release --base-href "$BASE/customer/" --dart-define=BREW_API=$BREW_API
+          flutter build web --release --base-href "$BASE/customer/" \
+            --dart-define=BREW_API=$BREW_API --dart-define=BREW_DEMO=true
 
       # --- Assemble the Pages site ---
       - name: Assemble site

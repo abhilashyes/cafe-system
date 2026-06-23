@@ -1,12 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/brew_api.dart';
+import '../api/demo_api.dart';
 import '../config.dart';
 import '../models.dart';
 
+/// Fully client-side demo (no backend) — set via --dart-define=BREW_DEMO=true.
+const bool kDemoMode = bool.fromEnvironment('BREW_DEMO', defaultValue: false);
+
 /// Single app-wide store (ChangeNotifier; no extra state package needed).
 class AppState extends ChangeNotifier {
-  final BrewApi api = BrewApi();
+  final BrewApi api = kDemoMode ? DemoBrewApi() : BrewApi();
   final String storeId = defaultStoreId;
 
   String? phone;

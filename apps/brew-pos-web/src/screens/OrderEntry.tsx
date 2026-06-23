@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { MenuItem, Order } from '@brew/contracts';
 import { api, STORE_ID } from '../api';
+import { demo, demoMode } from '../demo';
 
 interface CartLine {
   productId: string;
@@ -22,6 +23,10 @@ export function OrderEntry() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (demoMode) {
+      setMenu(demo.menu());
+      return;
+    }
     api.listStoreMenu(STORE_ID).then(setMenu).catch((e) => setError(String(e)));
   }, []);
 
@@ -38,11 +43,18 @@ export function OrderEntry() {
     setBusy(true);
     setError(null);
     try {
+      const table = fulfilment === 'DINE_IN' ? tableNumber || undefined : undefined;
+      if (demoMode) {
+        // Fully client-side: create the order + KDS ticket in the demo store.
+        setPlaced(demo.placeOrder(cart, fulfilment, table));
+        setCart([]);
+        return;
+      }
       const order = await api.createOrder({
         storeId: STORE_ID,
         channel: 'WALK_IN',
         fulfilment,
-        tableNumber: fulfilment === 'DINE_IN' ? tableNumber || undefined : undefined,
+        tableNumber: table,
         items: cart.map((l) => ({ productId: l.productId, quantity: l.quantity })),
       });
       // Cash is captured immediately at the counter (emits PaymentCaptured).

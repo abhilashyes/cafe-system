@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import type { KdsTicket, StationType } from '@brew/contracts';
 import { api, API_BASE_URL, STORE_ID } from '../api';
+import { demo, demoMode } from '../demo';
 
 const STATIONS: StationType[] = ['BAR', 'HOT_KITCHEN', 'COLD', 'BAKERY'];
 
@@ -23,6 +24,12 @@ export function Kds() {
   const [, forceTick] = useState(0);
 
   useEffect(() => {
+    if (demoMode) {
+      // No backend: subscribe to the in-memory demo store.
+      setConnected(true);
+      setTickets(demo.getTickets());
+      return demo.subscribe(() => setTickets(demo.getTickets()));
+    }
     const socket: Socket = io(`${API_BASE_URL}/kds`, {
       query: { storeId: STORE_ID },
       transports: ['websocket'],
@@ -51,7 +58,8 @@ export function Kds() {
     return map;
   }, [tickets]);
 
-  const bump = (itemId: string) => api.bumpItem(itemId).catch(() => undefined);
+  const bump = (itemId: string) =>
+    demoMode ? demo.bump(itemId) : api.bumpItem(itemId).catch(() => undefined);
 
   return (
     <section style={{ padding: 16, fontFamily: 'system-ui' }}>
