@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Reporting } from './screens/Reporting';
+import { LoyaltyConfig } from './screens/LoyaltyConfig';
+import { Catalog } from './screens/Catalog';
+import { Rbac } from './screens/Rbac';
 
-/** The Brew Lab — head-office admin shell. Screens are §5.3 placeholders. */
-const screens: Array<{ path: string; label: string; note: string }> = [
+/** The Brew Lab — head-office admin shell. */
+const nav: Array<{ path: string; label: string; note?: string }> = [
+  { path: '/reporting', label: 'Reporting & Analytics' },
+  { path: '/loyalty', label: 'Loyalty' },
+  { path: '/catalog', label: 'Catalog & Recipes' },
+  { path: '/rbac', label: 'Roles & Permissions' },
   { path: '/org', label: 'Org & Stores', note: 'Regions, stores, store config, hours, menu/price overrides — multi-region from day one.' },
-  { path: '/catalog', label: 'Catalog & Recipes', note: 'Products, modifiers, recipes/BOM, GST/HSN, pricing strategies.' },
-  { path: '/rbac', label: 'Roles & Permissions', note: 'Create roles, assign granular permissions scoped to org/region/store.' },
-  { path: '/loyalty', label: 'Loyalty', note: '5 tiers (thresholds, multipliers, benefits), points earn/expiry, rewards catalog; per-region overrides.' },
   { path: '/procurement', label: 'Procurement', note: 'Suppliers, central purchasing, approvals, inter-store transfers.' },
-  { path: '/reporting', label: 'Reporting & Analytics', note: 'Org-wide sales/profit/unit-economics with drill-down to store/item/staff/time.' },
   { path: '/privacy', label: 'Privacy Admin', note: 'DSR handling, consent ledger, retention config, access audit (Privacy Officer).' },
 ];
 
@@ -27,15 +31,40 @@ function ThemeToggle() {
   );
 }
 
-function Placeholder({ label, note }: { label: string; note: string }) {
+function Placeholder({ label, note }: { label: string; note?: string }) {
   return (
-    <section style={{ padding: 24 }}>
+    <section style={{ padding: 28 }}>
       <h2>{label}</h2>
       <p style={{ color: 'var(--text-muted)', maxWidth: 560 }}>{note}</p>
       <p style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
         Placeholder — consumes <code>@brew/contracts</code> SDK.
       </p>
     </section>
+  );
+}
+
+function NavLinks() {
+  const { pathname } = useLocation();
+  return (
+    <ul style={{ listStyle: 'none', padding: 0, lineHeight: 2.4, margin: 0 }}>
+      {nav.map((s) => {
+        const active = pathname === s.path;
+        return (
+          <li key={s.path}>
+            <Link
+              to={s.path}
+              style={{
+                color: active ? 'var(--accent)' : 'var(--text)',
+                fontWeight: active ? 700 : 400,
+                textDecoration: 'none',
+              }}
+            >
+              {s.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -54,23 +83,21 @@ export function App() {
             // Global Admin
           </div>
         </div>
-        <ul style={{ listStyle: 'none', padding: 0, lineHeight: 2.2, margin: 0 }}>
-          {screens.map((s) => (
-            <li key={s.path}>
-              <Link to={s.path}>{s.label}</Link>
-            </li>
-          ))}
-        </ul>
+        <NavLinks />
         <div style={{ marginTop: 24 }}>
           <ThemeToggle />
         </div>
       </nav>
       <main style={{ flex: 1, background: 'var(--bg)' }}>
         <Routes>
-          <Route path="/" element={<Navigate to="/org" replace />} />
-          {screens.map((s) => (
-            <Route key={s.path} path={s.path} element={<Placeholder label={s.label} note={s.note} />} />
-          ))}
+          <Route path="/" element={<Navigate to="/reporting" replace />} />
+          <Route path="/reporting" element={<Reporting />} />
+          <Route path="/loyalty" element={<LoyaltyConfig />} />
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/rbac" element={<Rbac />} />
+          <Route path="/org" element={<Placeholder label="Org & Stores" note={nav[4].note} />} />
+          <Route path="/procurement" element={<Placeholder label="Procurement" note={nav[5].note} />} />
+          <Route path="/privacy" element={<Placeholder label="Privacy Admin" note={nav[6].note} />} />
         </Routes>
       </main>
     </div>
