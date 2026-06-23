@@ -89,3 +89,48 @@ export const roles = [
   { key: 'Privacy Officer', allow: ['privacy'] },
   { key: 'Super Admin', allow: ['order', 'payment', 'refund', 'inventory', 'reports', 'loyalty', 'privacy'] },
 ];
+
+export const regions = [
+  {
+    name: 'South',
+    stores: [
+      { name: 'MG Road', city: 'Bengaluru', gstin: '29AABCB1234C1Z5', hours: '07:00–23:00', open: true },
+      { name: 'Indiranagar', city: 'Bengaluru', gstin: '29AABCB1234C1Z5', hours: '08:00–22:00', open: true },
+      { name: 'Banjara Hills', city: 'Hyderabad', gstin: '36AABCB1234C1Z2', hours: '08:00–23:00', open: false },
+    ],
+  },
+  {
+    name: 'West',
+    stores: [
+      { name: 'Bandra', city: 'Mumbai', gstin: '27AABCB1234C1Z5', hours: '07:30–23:30', open: true },
+      { name: 'Koregaon Park', city: 'Pune', gstin: '27AABCB1234C1Z5', hours: '08:00–22:30', open: true },
+    ],
+  },
+  {
+    name: 'North',
+    stores: [
+      { name: 'Connaught Place', city: 'New Delhi', gstin: '07AABCB1234C1Z9', hours: '07:00–23:00', open: true },
+      { name: 'Cyber Hub', city: 'Gurugram', gstin: '06AABCB1234C1Z1', hours: '08:00–00:00', open: true },
+    ],
+  },
+];
+
+export const suppliers = [
+  { name: 'Western Ghats Coffee Co.', supplies: 'Espresso beans', lead: '3 days' },
+  { name: 'Amul Dairy', supplies: 'Milk', lead: '1 day' },
+  { name: 'Theobroma Wholesale', supplies: 'Croissant, pastries', lead: '2 days' },
+  { name: 'FreshFarm Produce', supplies: 'Mango base, fruit', lead: '2 days' },
+];
+
+export const purchaseOrders = [
+  { id: 'PO-10421', supplier: 'Amul Dairy', store: 'MG Road', lines: 'Milk ×120 L', status: 'RECEIVED' },
+  { id: 'PO-10422', supplier: 'Western Ghats Coffee Co.', store: 'Bandra', lines: 'Beans ×40 kg', status: 'APPROVED' },
+  { id: 'PO-10423', supplier: 'Theobroma Wholesale', store: 'CP', lines: 'Croissant ×300', status: 'DRAFT' },
+  { id: 'PO-10424', supplier: 'FreshFarm Produce', store: 'Indiranagar', lines: 'Mango base ×30 L', status: 'DRAFT' },
+];
+
+export const transfers = [
+  { id: 'TR-552', from: 'MG Road', to: 'Indiranagar', item: 'Milk 40 L', status: 'IN TRANSIT' },
+  { id: 'TR-551', from: 'Bandra', to: 'Koregaon Park', item: 'Beans 10 kg', status: 'COMPLETED' },
+];
+

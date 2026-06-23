@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { OrderEntry } from './screens/OrderEntry';
 import { Kds } from './screens/Kds';
+import { Payments } from './screens/Payments';
+import { StoreOps } from './screens/StoreOps';
+import { Inventory } from './screens/Inventory';
+import { Reports } from './screens/Reports';
 
 /**
  * The Brew Lab — POS + store ops + KDS shell. Order Entry and KDS are live
@@ -13,12 +17,11 @@ const live: Array<{ path: string; label: string }> = [
   { path: '/kds', label: 'KDS' },
 ];
 
-const screens: Array<{ path: string; label: string; note: string }> = [
-  { path: '/payments', label: 'Payments', note: 'UPI QR / UPI collect, Razorpay card terminal, cash. Manager-approved refunds.' },
-  { path: '/fulfilment', label: 'Fulfilment', note: 'Order queue + bump bar; triggers KOT prints to stations.' },
-  { path: '/store-ops', label: 'Store Ops', note: 'Open/close store, 86 items, cash drawer, end-of-day Z-report.' },
-  { path: '/inventory', label: 'Inventory', note: 'On-hand stock, wastage, transfers, receiving, store POs.' },
-  { path: '/reports', label: 'Reports', note: "Day's sales, top items, staff sales — scoped to this store." },
+const screens: Array<{ path: string; label: string }> = [
+  { path: '/payments', label: 'Payments' },
+  { path: '/store-ops', label: 'Store Ops' },
+  { path: '/inventory', label: 'Inventory' },
+  { path: '/reports', label: 'Reports' },
 ];
 
 function ThemeToggle() {
@@ -33,18 +36,6 @@ function ThemeToggle() {
     <button className="btn-tonal" onClick={toggle} title="Toggle theme" style={{ width: '100%' }}>
       {theme === 'dark' ? '☾ Dark' : '☀ Light'}
     </button>
-  );
-}
-
-function Placeholder({ label, note }: { label: string; note: string }) {
-  return (
-    <section style={{ padding: 24 }}>
-      <h2>{label}</h2>
-      <p style={{ color: 'var(--text-muted)', maxWidth: 540 }}>{note}</p>
-      <p style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-        Placeholder — consumes <code>@brew/contracts</code> SDK.
-      </p>
-    </section>
   );
 }
 
@@ -90,9 +81,10 @@ export function App() {
           <Route path="/" element={<Navigate to="/order" replace />} />
           <Route path="/order" element={<OrderEntry />} />
           <Route path="/kds" element={<Kds />} />
-          {screens.map((s) => (
-            <Route key={s.path} path={s.path} element={<Placeholder label={s.label} note={s.note} />} />
-          ))}
+          <Route path="/payments" element={<Payments />} />
+          <Route path="/store-ops" element={<StoreOps />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
       </main>
     </div>
