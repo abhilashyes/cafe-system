@@ -84,7 +84,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     ),
                   ),
                 const SizedBox(height: 12),
-                OutlinedButton(onPressed: () => context.go('/menu'), child: const Text('Back to menu')),
+                OutlinedButton(onPressed: () => context.go('/app'), child: const Text('Back to ordering')),
               ],
             ),
           );
