@@ -51,9 +51,14 @@ function Placeholder({ label, note }: { label: string; note: string }) {
 function Brand() {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>The Brew Lab</div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase' }}>
-        POS &amp; KDS
+      <div style={{ fontSize: 19, fontWeight: 800, fontFamily: 'var(--font-heading)', color: 'var(--text)' }}>
+        <span className="mono" style={{ color: 'var(--accent)' }}>{'{ }'}</span> The Brew Lab
+      </div>
+      <div
+        className="mono"
+        style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase' }}
+      >
+        // POS &amp; KDS
       </div>
     </div>
   );

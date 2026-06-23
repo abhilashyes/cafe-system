@@ -11,6 +11,11 @@
   --text-muted: #98A1B2;
   --on-accent: #0F1117;
   --border: rgba(255, 255, 255, 0.08);
+
+  /* The Brew Lab — typography */
+  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Sora', var(--font-sans);
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 }
 
 :root[data-theme='light'] {
@@ -35,7 +40,16 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+code, .mono {
+  font-family: var(--font-mono);
 }
 
 a {
@@ -70,4 +84,5 @@ button {
 .price {
   color: var(--champagne);
   font-weight: 600;
+  font-family: var(--font-mono);
 }

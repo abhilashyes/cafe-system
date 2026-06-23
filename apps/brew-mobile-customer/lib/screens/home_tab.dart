@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../theme.dart';
+import '../widgets/brew_logo.dart';
 
 /// Home tab — greeting, a feature hero, and quick links.
 class HomeTab extends StatelessWidget {
@@ -12,7 +13,7 @@ class HomeTab extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('The Brew Lab', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const BrewLogo(size: 18),
         actions: [
           IconButton(icon: const Icon(Icons.place_outlined), onPressed: () => context.go('/stores')),
           IconButton(icon: const Icon(Icons.shield_outlined), onPressed: () => context.go('/privacy')),
