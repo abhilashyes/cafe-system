@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../state/app_state.dart';
+import '../widgets/brew_logo.dart';
 
 /// Phone + OTP sign-in via Cognito (no password). Dev OTP is 000000.
 class LoginScreen extends StatefulWidget {
@@ -40,7 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Welcome to The Brew Lab', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const BrewLogo(size: 24),
+            const SizedBox(height: 10),
+            const Text('Welcome', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             const Text('Sign in with your phone number — we’ll text you a code.'),
             const SizedBox(height: 16),

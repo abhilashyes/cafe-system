@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0F1117" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <title>The Brew Lab — Demo</title>
   <style>
     :root {
@@ -11,12 +14,16 @@
       --accent: #A78BFA; --accent-alt: #7DD3FC; --champagne: #E9CBA7;
       --text: #F5F7FA; --text-muted: #98A1B2; --on-accent: #0F1117;
       --border: rgba(255,255,255,.08);
+      --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+      --font-heading: 'Sora', var(--font-sans);
+      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--text); }
     header { padding: 56px 24px 40px; background: radial-gradient(1200px 400px at 20% -10%, rgba(167,139,250,.18), transparent), var(--surface); border-bottom: 1px solid var(--border); }
-    .brand { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
-    .brand .dot { color: var(--accent); }
+    .brand { font-family: var(--font-heading); font-size: 34px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand .braces { font-family: var(--font-mono); color: var(--accent); font-weight: 600; margin-right: 6px; }
+    .card h2 { font-family: var(--font-heading); }
     header p { margin: 8px 0 0; color: var(--text-muted); max-width: 620px; }
     main { max-width: 920px; margin: 36px auto; padding: 0 24px; }
     .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
@@ -28,12 +35,12 @@
     .card p { margin: 0; font-size: 14px; color: var(--text-muted); }
     .pill { display: inline-block; margin-top: 14px; font-size: 12px; color: var(--on-accent); background: var(--champagne); padding: 2px 10px; border-radius: 999px; }
     .note { margin-top: 30px; font-size: 13px; color: var(--text-muted); }
-    code { background: var(--surface); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; color: var(--champagne); }
+    code { font-family: var(--font-mono); background: var(--surface); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; color: var(--champagne); }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">The Brew Lab<span class="dot">.</span></div>
+    <div class="brand"><span class="braces">{ }</span>The Brew Lab</div>
     <p>Multi-tenant café operations platform — order, fulfil, and run head office. Pick a surface to explore.</p>
   </header>
   <main>

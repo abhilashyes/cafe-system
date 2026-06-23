@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../models.dart';
 import '../state/app_state.dart';
+import '../theme.dart';
 
 const _steps = ['RECEIVED', 'IN_PROGRESS', 'READY', 'PICKED_UP'];
 
@@ -55,9 +56,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Pickup code', style: Theme.of(context).textTheme.labelMedium),
-                Text(order.pickupCode, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                Text(order.pickupCode, style: BrewColors.mono(context, size: 40, color: Theme.of(context).colorScheme.primary).copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                Text('Total: ${formatPaise(order.grandTotalPaise)} (incl. GST)'),
+                Row(children: [
+                  const Text('Total: '),
+                  Text(formatPaise(order.grandTotalPaise), style: BrewColors.price(context)),
+                  const Text(' (incl. GST)'),
+                ]),
                 const SizedBox(height: 24),
                 for (var i = 0; i < _steps.length; i++)
                   ListTile(

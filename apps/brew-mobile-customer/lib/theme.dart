@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// The Brew Lab — brand palette (dark + light tokens).
 class BrewColors {
@@ -29,6 +30,17 @@ class BrewColors {
   /// Warm tertiary used for prices/amounts.
   static Color champagne(BuildContext c) =>
       Theme.of(c).brightness == Brightness.dark ? champagneDark : champagneLight;
+
+  /// Prices/amounts render in JetBrains Mono (brand rule).
+  static TextStyle price(BuildContext c, {double size = 14}) => GoogleFonts.jetBrainsMono(
+        color: champagne(c),
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+      );
+
+  /// Mono kicker/label style (// labels, codes).
+  static TextStyle mono(BuildContext c, {double size = 12, Color? color}) =>
+      GoogleFonts.jetBrainsMono(fontSize: size, color: color);
 }
 
 ThemeData buildBrewTheme(Brightness brightness) {
@@ -47,16 +59,34 @@ ThemeData buildBrewTheme(Brightness brightness) {
     onSurface: dark ? BrewColors.textDark : BrewColors.textLight,
   );
 
+  final onSurface = dark ? BrewColors.textDark : BrewColors.textLight;
+  // Body text: Manrope. Headings/titles: Sora.
+  final body = GoogleFonts.manropeTextTheme(
+    (dark ? ThemeData.dark() : ThemeData.light()).textTheme,
+  );
+  TextStyle sora(TextStyle? base, FontWeight w) => GoogleFonts.sora(textStyle: base, fontWeight: w);
+  final textTheme = body.copyWith(
+    displayLarge: sora(body.displayLarge, FontWeight.w800),
+    displayMedium: sora(body.displayMedium, FontWeight.w700),
+    displaySmall: sora(body.displaySmall, FontWeight.w700),
+    headlineLarge: sora(body.headlineLarge, FontWeight.w700),
+    headlineMedium: sora(body.headlineMedium, FontWeight.w700),
+    headlineSmall: sora(body.headlineSmall, FontWeight.w700),
+    titleLarge: sora(body.titleLarge, FontWeight.w700),
+  );
+
   return ThemeData(
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
     scaffoldBackgroundColor: dark ? BrewColors.bgDark : BrewColors.bgLight,
     cardColor: dark ? BrewColors.cardDark : BrewColors.cardLight,
+    textTheme: textTheme,
     appBarTheme: AppBarTheme(
       backgroundColor: dark ? BrewColors.surfaceDark : BrewColors.surfaceLight,
-      foregroundColor: dark ? BrewColors.textDark : BrewColors.textLight,
+      foregroundColor: onSurface,
       elevation: 0,
+      titleTextStyle: GoogleFonts.sora(fontWeight: FontWeight.w700, fontSize: 20, color: onSurface),
     ),
   );
 }

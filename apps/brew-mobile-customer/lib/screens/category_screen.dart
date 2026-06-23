@@ -57,8 +57,7 @@ class CategoryScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(formatPaise(m.pricePaise),
-                      style: TextStyle(color: BrewColors.champagne(context), fontWeight: FontWeight.bold)),
+                  Text(formatPaise(m.pricePaise), style: BrewColors.price(context, size: 15)),
                   _AddButton(item: m),
                 ],
               ),
