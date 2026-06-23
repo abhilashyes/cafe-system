@@ -24,6 +24,21 @@ pnpm --filter brew-backend start:dev
 - Swagger UI: http://localhost:3000/docs
 - Dev auth: any `Authorization: Bearer <token>` is accepted; OTP code is **`000000`**.
 
+### Runtime profile (`BREW_PROFILE`)
+The backend selects its adapters at one composition root by profile:
+
+| `BREW_PROFILE` | Adapters | Use |
+| --- | --- | --- |
+| `demo` (default) | mock Cognito, mock Razorpay, in-memory data | local dev, CI, the GitHub Pages demo — no cloud needed |
+| `live` | real Cognito/Razorpay (wired progressively in M2/M4) | staging/prod |
+
+`demo` is the default, so a bare checkout runs the fully mocked system with zero
+config. Real integrations are added **alongside** the mocks and selected by this
+flag — the demo path is never removed, so the demo keeps working as live layers
+land. The active profile is logged at boot (`Runtime profile: …`). Selecting
+`live` before an integration's milestone is implemented fails loudly rather than
+silently mocking.
+
 ## 3. Verify the end-to-end flow (one command)
 With the backend running, in another terminal:
 ```bash

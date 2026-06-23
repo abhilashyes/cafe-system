@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { notConfigured } from '../config/profile';
 
 export interface GatewayOrder {
   gatewayOrderId: string;
@@ -39,5 +40,28 @@ export class MockPaymentAdapter extends PaymentAdapter {
   verifyWebhookSignature(_rawBody: string, signature: string): boolean {
     // Prod: HMAC-SHA256(rawBody, RAZORPAY_WEBHOOK_SECRET) === signature.
     return signature === 'mock-valid-signature';
+  }
+}
+
+/**
+ * Live Razorpay adapter (selected by BREW_PROFILE=live). Real UPI intent/collect,
+ * card orders, refunds and HMAC-SHA256 webhook verification land in milestone M4.
+ * Bound at the composition root now; calling it before M4 fails loudly. Webhook
+ * verification deliberately returns `false` rather than throwing, so an
+ * unconfigured live deployment rejects unverified webhooks instead of trusting
+ * them (fail-closed).
+ */
+@Injectable()
+export class LivePaymentAdapter extends PaymentAdapter {
+  async createOrder(_amountPaise: number, _idempotencyKey: string): Promise<GatewayOrder> {
+    throw notConfigured('Razorpay payments', 'M4 (Payments)');
+  }
+
+  async refund(_gatewayPaymentId: string, _amountPaise?: number): Promise<{ refundId: string }> {
+    throw notConfigured('Razorpay payments', 'M4 (Payments)');
+  }
+
+  verifyWebhookSignature(_rawBody: string, _signature: string): boolean {
+    return false; // fail-closed until M4 wires real HMAC verification
   }
 }
