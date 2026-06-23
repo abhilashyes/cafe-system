@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Brew Notifications API
+  version: 1.0.0
+  description: SMS/push/email for order status & marketing (consent-gated). OTP delegated to Cognito.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /notifications/devices:
+    post:
+      operationId: registerDevice
+      summary: Register a push token for order-status notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, platform]
+              properties:
+                token: { type: string }
+                platform: { type: string, enum: [IOS, ANDROID, WEB] }
+      responses: { '201': { description: Registered } }
+  /notifications/send:
+    post:
+      operationId: sendNotification
+      summary: Internal — send a transactional/marketing message (marketing requires consent)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId, channel, purpose, template]
+              properties:
+                customerId: { type: string }
+                channel: { type: string, enum: [SMS, PUSH, EMAIL] }
+                purpose: { type: string, enum: [TRANSACTIONAL, MARKETING] }
+                template: { type: string }
+      responses: { '202': { description: Queued }, '403': { description: No marketing consent } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }

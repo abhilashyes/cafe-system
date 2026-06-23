@@ -1,0 +1,52 @@
+openapi: 3.1.0
+info:
+  title: Brew Catalog API
+  version: 1.0.0
+  description: Products, modifiers, recipes (BOM), GST/HSN, store-level availability & pricing.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /products:
+    get: { operationId: listProducts, responses: { '200': { description: Products } } }
+    post: { operationId: createProduct, responses: { '201': { description: Created } } }
+  /stores/{storeId}/menu:
+    get:
+      operationId: getStoreMenu
+      summary: Store-aware menu (availability + price can vary by store)
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Menu
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Product' } }
+  /stores/{storeId}/products/{productId}/availability:
+    put:
+      operationId: setProductAvailability
+      summary: 86 / un-86 an item at a store
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+        - { name: productId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { available: { type: boolean } } }
+      responses: { '200': { description: Updated } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        station: { type: string, enum: [BAR, HOT_KITCHEN, COLD, BAKERY] }
+        basePricePaise: { type: integer }
+        gst:
+          type: object
+          properties:
+            hsnSac: { type: string }
+            ratePercent: { type: number }

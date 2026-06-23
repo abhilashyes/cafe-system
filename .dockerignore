@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/build
+**/.turbo
+.git
+**/.env
+**/.env.*
+apps/brew-mobile-customer
+apps/brew-infra
+**/coverage

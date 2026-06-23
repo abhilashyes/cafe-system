@@ -1,0 +1,105 @@
+openapi: 3.1.0
+info:
+  title: Brew Ordering API
+  version: 1.0.0
+  description: Cart, order lifecycle, pre-order/scheduled pickup, dine-in/takeaway, station routing.
+servers:
+  - url: https://api.brew.example/v1
+    description: production
+  - url: http://localhost:3000/v1
+    description: local
+security:
+  - cognito: []
+tags:
+  - name: orders
+paths:
+  /orders:
+    post:
+      tags: [orders]
+      operationId: createOrder
+      summary: Create an order (pickup pre-order, walk-in, or dine-in)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrderRequest' }
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '409': { description: Item unavailable or store closed }
+  /orders/{orderId}:
+    get:
+      tags: [orders]
+      operationId: getOrder
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '404': { description: Not found }
+  /orders/{orderId}/ready:
+    post:
+      tags: [orders]
+      operationId: markOrderReady
+      summary: Mark order ready (KDS/POS bump) — emits order.ready
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Updated }
+components:
+  securitySchemes:
+    cognito:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string }
+  schemas:
+    FulfilmentType: { type: string, enum: [DINE_IN, TAKEAWAY] }
+    OrderChannel: { type: string, enum: [MOBILE_PREORDER, WALK_IN, AGGREGATOR] }
+    CreateOrderRequest:
+      type: object
+      required: [storeId, channel, fulfilment, items]
+      properties:
+        storeId: { type: string }
+        channel: { $ref: '#/components/schemas/OrderChannel' }
+        fulfilment: { $ref: '#/components/schemas/FulfilmentType' }
+        tableNumber: { type: string, description: optional, dine-in only }
+        scheduledFor: { type: string, format: date-time, description: future pickup slot }
+        customerId: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderItemInput' }
+    OrderItemInput:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        modifierOptionIds: { type: array, items: { type: string } }
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        storeId: { type: string }
+        channel: { $ref: '#/components/schemas/OrderChannel' }
+        fulfilment: { $ref: '#/components/schemas/FulfilmentType' }
+        tableNumber: { type: string }
+        pickupCode: { type: string }
+        status:
+          type: string
+          enum: [CART, RECEIVED, IN_PROGRESS, READY, PICKED_UP, CANCELLED]
+        grandTotalPaise: { type: integer }
+        createdAt: { type: string, format: date-time }

@@ -1,0 +1,36 @@
+name: Flutter (customer app)
+
+on:
+  pull_request:
+    paths: ["apps/brew-mobile-customer/**", ".github/workflows/flutter.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/brew-mobile-customer/**", ".github/workflows/flutter.yml"]
+
+defaults:
+  run:
+    working-directory: apps/brew-mobile-customer
+
+jobs:
+  analyze-test-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Generate the native/web scaffolding the repo doesn't track, then deps.
+      - run: flutter create . --org com.projectbrew --project-name brew_mobile_customer --platforms=android,ios,web
+      - run: flutter pub get
+
+      - run: flutter analyze
+      - run: flutter test
+
+      # Build the browser app (installable PWA) — artifact for preview/deploy.
+      - run: flutter build web --release --dart-define=BREW_API=https://api.brew.example
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brew-pwa
+          path: apps/brew-mobile-customer/build/web

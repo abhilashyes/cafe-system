@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: Brew Loyalty API
+  version: 1.0.0
+  description: Redeemable points ("stars") ledger + 5 spend-based membership tiers + rewards.
+servers: [{ url: http://localhost:3000/v1 }]
+security: [{ cognito: [] }]
+paths:
+  /loyalty/accounts/{customerId}:
+    get:
+      operationId: getLoyaltyAccount
+      summary: Balance, current tier (of 5), progress to next tier
+      parameters:
+        - { name: customerId, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: Loyalty account } }
+  /loyalty/accounts/{customerId}/ledger:
+    get:
+      operationId: getLoyaltyLedger
+      summary: Auditable points ledger (reconciles to transactions)
+      parameters:
+        - { name: customerId, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: Ledger entries } }
+  /loyalty/rewards:
+    get:
+      operationId: listRewards
+      summary: Redeemable rewards catalog
+      responses: { '200': { description: Active rewards } }
+  /loyalty/redeem:
+    post:
+      operationId: redeemReward
+      parameters:
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId, rewardId, orderId]
+              properties:
+                customerId: { type: string }
+                rewardId: { type: string }
+                orderId: { type: string }
+      responses: { '200': { description: Redeemed }, '402': { description: Insufficient stars } }
+  /loyalty/tiers:
+    get: { operationId: listTiers, responses: { '200': { description: 5 configured tiers } } }
+    put: { operationId: configureTiers, responses: { '200': { description: Updated (global admin) } } }
+components:
+  securitySchemes:
+    cognito: { type: http, scheme: bearer, bearerFormat: JWT }

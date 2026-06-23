@@ -1,0 +1,21 @@
+{
+  "name": "brew-kot-printer",
+  "version": "0.1.0",
+  "description": "Local KOT sticker print agent — printer-agnostic (ESC/POS + ZPL), offline buffering, station routing.",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/agent.js",
+    "dev": "ts-node src/agent.ts",
+    "test": "echo \"(kot-printer) no unit tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@brew/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
