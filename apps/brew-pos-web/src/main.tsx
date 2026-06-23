@@ -2,6 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { App } from './App';
+import './theme.css';
+
+// Apply the saved theme (default: dark) before first paint.
+document.documentElement.dataset.theme = localStorage.getItem('brew.theme') ?? 'dark';
 
 // Hash routing for static hosting (GitHub Pages subpaths) — set only in that
 // build; production uses clean BrowserRouter paths.

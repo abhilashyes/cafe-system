@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Welcome to Brew', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const Text('Welcome to The Brew Lab', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             const Text('Sign in with your phone number — we’ll text you a code.'),
             const SizedBox(height: 16),

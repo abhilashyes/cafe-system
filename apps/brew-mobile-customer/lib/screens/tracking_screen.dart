@@ -70,7 +70,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 const Spacer(),
                 if (appState.lastUpiIntent != null)
                   Card(
-                    color: const Color(0xFFF0F7F2),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Column(

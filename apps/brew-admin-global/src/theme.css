@@ -1,0 +1,73 @@
+/* The Brew Lab — design tokens (dark default + light). */
+:root {
+  --bg: #0F1117;
+  --surface: #161A22;
+  --card: #1B202B;
+  --accent: #A78BFA;
+  --accent-alt: #7DD3FC;
+  --champagne: #E9CBA7;
+  --rose: #F4A8C5;
+  --text: #F5F7FA;
+  --text-muted: #98A1B2;
+  --on-accent: #0F1117;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='light'] {
+  --bg: #FAFAFC;
+  --surface: #F4F5F8;
+  --card: #FFFFFF;
+  --accent: #7C5CFA;
+  --accent-alt: #0891B2;
+  --champagne: #B07B4E;
+  --rose: #DB7093;
+  --text: #1A1D26;
+  --text-muted: #6B7280;
+  --on-accent: #FFFFFF;
+  --border: rgba(0, 0, 0, 0.10);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Shared primitives used across screens. */
+.btn {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-tonal {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.price {
+  color: var(--champagne);
+  font-weight: 600;
+}

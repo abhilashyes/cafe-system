@@ -21,8 +21,9 @@ class ResponsiveShell extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     if (width < _phoneBreakpoint) return child;
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return ColoredBox(
-      color: const Color(0xFFEDEDED),
+      color: dark ? const Color(0xFF0B0D12) : const Color(0xFFEDEDED),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _canvasWidth),

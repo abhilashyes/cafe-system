@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'state/app_state.dart';
+import 'theme.dart';
 import 'widgets/responsive_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/menu_screen.dart';
@@ -43,9 +44,11 @@ class BrewApp extends StatelessWidget {
     );
 
     return MaterialApp.router(
-      title: 'Brew',
+      title: 'The Brew Lab',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: const Color(0xFF00704A), useMaterial3: true),
+      theme: buildBrewTheme(Brightness.light),
+      darkTheme: buildBrewTheme(Brightness.dark),
+      themeMode: ThemeMode.dark, // brand is dark-first
       routerConfig: router,
       // Adaptive: full-bleed on phones, centered phone-width canvas on web/desktop.
       builder: (context, child) => ResponsiveShell(child: child ?? const SizedBox.shrink()),
