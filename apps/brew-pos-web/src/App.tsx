@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { OrderEntry } from './screens/OrderEntry';
 import { Kds } from './screens/Kds';
 
 /**
- * POS + store ops + KDS shell. Order Entry and KDS are live (wired to the backend
- * via @brew/contracts + the /kds WebSocket); the rest are §5.2 placeholders.
+ * The Brew Lab — POS + store ops + KDS shell. Order Entry and KDS are live
+ * (wired to the backend via @brew/contracts + the /kds WebSocket); the rest are
+ * §5.2 placeholders.
  */
 const live: Array<{ path: string; label: string }> = [
-  { path: '/order', label: 'Order Entry (live)' },
-  { path: '/kds', label: 'KDS (live)' },
+  { path: '/order', label: 'Order Entry' },
+  { path: '/kds', label: 'KDS' },
 ];
 
 const screens: Array<{ path: string; label: string; note: string }> = [
@@ -19,25 +21,53 @@ const screens: Array<{ path: string; label: string; note: string }> = [
   { path: '/reports', label: 'Reports', note: "Day's sales, top items, staff sales — scoped to this store." },
 ];
 
+function ThemeToggle() {
+  const [theme, setTheme] = useState(document.documentElement.dataset.theme ?? 'dark');
+  const toggle = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('brew.theme', next);
+    setTheme(next);
+  };
+  return (
+    <button className="btn-tonal" onClick={toggle} title="Toggle theme" style={{ width: '100%' }}>
+      {theme === 'dark' ? '☾ Dark' : '☀ Light'}
+    </button>
+  );
+}
+
 function Placeholder({ label, note }: { label: string; note: string }) {
   return (
     <section style={{ padding: 24 }}>
       <h2>{label}</h2>
-      <p style={{ color: '#666', maxWidth: 540 }}>{note}</p>
-      <p style={{ color: '#aaa' }}>Phase 0 placeholder — consumes <code>@brew/contracts</code> SDK.</p>
+      <p style={{ color: 'var(--text-muted)', maxWidth: 540 }}>{note}</p>
+      <p style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+        Placeholder — consumes <code>@brew/contracts</code> SDK.
+      </p>
     </section>
+  );
+}
+
+function Brand() {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>The Brew Lab</div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase' }}>
+        POS &amp; KDS
+      </div>
+    </div>
   );
 }
 
 export function App() {
   return (
-    <div style={{ fontFamily: 'system-ui', display: 'flex', minHeight: '100vh' }}>
-      <nav style={{ width: 200, borderRight: '1px solid #eee', padding: 16 }}>
-        <h1 style={{ fontSize: 18 }}>Brew POS</h1>
-        <ul style={{ listStyle: 'none', padding: 0, lineHeight: 2 }}>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <nav style={{ width: 210, borderRight: '1px solid var(--border)', padding: 16, background: 'var(--surface)' }}>
+        <Brand />
+        <ul style={{ listStyle: 'none', padding: 0, lineHeight: 2.2, margin: 0 }}>
           {live.map((s) => (
             <li key={s.path}>
-              <Link to={s.path}>{s.label}</Link>
+              <Link to={s.path}>{s.label} <span style={{ color: 'var(--accent-alt)', fontSize: 11 }}>● live</span></Link>
             </li>
           ))}
           {screens.map((s) => (
@@ -46,8 +76,11 @@ export function App() {
             </li>
           ))}
         </ul>
+        <div style={{ marginTop: 24 }}>
+          <ThemeToggle />
+        </div>
       </nav>
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, background: 'var(--bg)' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/order" replace />} />
           <Route path="/order" element={<OrderEntry />} />

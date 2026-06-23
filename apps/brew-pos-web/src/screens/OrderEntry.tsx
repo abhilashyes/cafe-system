@@ -77,20 +77,30 @@ export function OrderEntry() {
     <section style={{ padding: 24, display: 'flex', gap: 32 }}>
       <div style={{ flex: 1 }}>
         <h2>Menu</h2>
-        {error && <p style={{ color: 'crimson' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--rose)' }}>{error}</p>}
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {menu.map((m) => (
             <li key={m.id} style={{ marginBottom: 8 }}>
-              <button disabled={!m.available} onClick={() => add(m)} style={{ padding: '8px 12px' }}>
-                {m.name} — {rupees(m.pricePaise)} {m.available ? '' : '(86)'}
+              <button className="btn-tonal" disabled={!m.available} onClick={() => add(m)}>
+                {m.name} — <span className="price">{rupees(m.pricePaise)}</span>{' '}
+                {m.available ? '' : <span style={{ color: 'var(--text-muted)' }}>(86)</span>}
               </button>
             </li>
           ))}
         </ul>
       </div>
 
-      <div style={{ width: 320 }}>
-        <h2>Order</h2>
+      <div
+        style={{
+          width: 320,
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          padding: 16,
+          alignSelf: 'flex-start',
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Order</h2>
         <div style={{ marginBottom: 8 }}>
           <label>
             <input
@@ -121,23 +131,31 @@ export function OrderEntry() {
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {cart.map((l) => (
             <li key={l.productId}>
-              {l.quantity}× {l.name} — {rupees(l.pricePaise * l.quantity)}
+              {l.quantity}× {l.name} — <span className="price">{rupees(l.pricePaise * l.quantity)}</span>
             </li>
           ))}
         </ul>
         <p>
-          <strong>Subtotal (ex-GST): {rupees(subtotal)}</strong>
+          <strong>Subtotal (ex-GST): <span className="price">{rupees(subtotal)}</span></strong>
         </p>
-        <button disabled={cart.length === 0 || busy} onClick={placeAndPay} style={{ padding: '10px 16px' }}>
+        <button className="btn" disabled={cart.length === 0 || busy} onClick={placeAndPay}>
           {busy ? 'Processing…' : 'Place & take cash'}
         </button>
 
         {placed && (
-          <div style={{ marginTop: 16, padding: 12, background: '#f0f7f2' }}>
-            <strong>Order placed ✓</strong>
-            <div>Pickup code: {placed.pickupCode}</div>
-            <div>Total: {rupees(placed.totals.grandTotalPaise)}</div>
-            <div style={{ color: '#666' }}>Tickets sent to the KDS &amp; printers.</div>
+          <div
+            style={{
+              marginTop: 16,
+              padding: 12,
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+            }}
+          >
+            <strong style={{ color: 'var(--accent-alt)' }}>Order placed ✓</strong>
+            <div>Pickup code: <strong style={{ color: 'var(--accent)' }}>{placed.pickupCode}</strong></div>
+            <div>Total: <span className="price">{rupees(placed.totals.grandTotalPaise)}</span></div>
+            <div style={{ color: 'var(--text-muted)' }}>Tickets sent to the KDS &amp; printers.</div>
           </div>
         )}
       </div>

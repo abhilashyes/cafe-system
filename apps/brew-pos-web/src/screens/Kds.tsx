@@ -6,12 +6,12 @@ import { demo, demoMode } from '../demo';
 
 const STATIONS: StationType[] = ['BAR', 'HOT_KITCHEN', 'COLD', 'BAKERY'];
 
-/** Elapsed-time SLA colour cue: green < 5m, amber < 8m, red after. */
-function slaColor(createdAt: string): string {
+/** Elapsed-time SLA cue (left border): cyan < 5m, champagne < 8m, rose after. */
+function slaBorder(createdAt: string): string {
   const mins = (Date.now() - new Date(createdAt).getTime()) / 60000;
-  if (mins > 8) return '#fdecea';
-  if (mins > 5) return '#fff4e5';
-  return '#f0f7f2';
+  if (mins > 8) return 'var(--rose)';
+  if (mins > 5) return 'var(--champagne)';
+  return 'var(--accent-alt)';
 }
 
 /**
@@ -62,34 +62,50 @@ export function Kds() {
     demoMode ? demo.bump(itemId) : api.bumpItem(itemId).catch(() => undefined);
 
   return (
-    <section style={{ padding: 16, fontFamily: 'system-ui' }}>
+    <section style={{ padding: 16 }}>
       <h2>
-        Kitchen Display — {STORE_ID}{' '}
-        <span style={{ fontSize: 14, color: connected ? 'green' : 'crimson' }}>
+        The Brew Lab — Kitchen Display{' '}
+        <span style={{ fontSize: 14, color: connected ? 'var(--accent-alt)' : 'var(--rose)' }}>
           {connected ? '● live' : '● reconnecting…'}
         </span>
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${STATIONS.length}, 1fr)`, gap: 12 }}>
         {STATIONS.map((station) => (
           <div key={station}>
-            <h3 style={{ borderBottom: '2px solid #ddd' }}>{station}</h3>
-            {byStation[station].length === 0 && <p style={{ color: '#aaa' }}>—</p>}
+            <h3 style={{ borderBottom: '2px solid var(--border)', paddingBottom: 4, color: 'var(--accent)' }}>
+              {station}
+            </h3>
+            {byStation[station].length === 0 && <p style={{ color: 'var(--text-muted)' }}>—</p>}
             {byStation[station].map((t) => (
               <div
                 key={t.orderId}
-                style={{ background: slaColor(t.createdAt), padding: 10, borderRadius: 6, marginBottom: 10 }}
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  borderLeft: `4px solid ${slaBorder(t.createdAt)}`,
+                  padding: 10,
+                  borderRadius: 8,
+                  marginBottom: 10,
+                }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <strong>#{t.pickupCode}</strong>
-                  <span>{t.fulfilment === 'DINE_IN' ? `Dine-in T${t.tableNumber ?? '?'}` : 'Takeaway'}</span>
+                  <strong style={{ color: 'var(--accent)' }}>#{t.pickupCode}</strong>
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    {t.fulfilment === 'DINE_IN' ? `Dine-in T${t.tableNumber ?? '?'}` : 'Takeaway'}
+                  </span>
                 </div>
                 {t.items.map((i) => (
                   <div key={i.itemId} style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                    <span style={{ textDecoration: i.status === 'READY' ? 'line-through' : 'none' }}>
+                    <span
+                      style={{
+                        textDecoration: i.status === 'READY' ? 'line-through' : 'none',
+                        color: i.status === 'READY' ? 'var(--text-muted)' : 'var(--text)',
+                      }}
+                    >
                       {i.quantity}× {i.name}
                     </span>
                     {i.status === 'PENDING' && (
-                      <button onClick={() => bump(i.itemId)}>Bump</button>
+                      <button className="btn-tonal" onClick={() => bump(i.itemId)}>Bump</button>
                     )}
                   </div>
                 ))}
