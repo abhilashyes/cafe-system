@@ -1,0 +1,95 @@
+name: Deploy demo (GitHub Pages)
+
+# Publishes the whole platform's web surfaces to GitHub Pages on push to main:
+#   /<repo>/           → landing page
+#   /<repo>/pos/       → POS + KDS (React)
+#   /<repo>/admin/     → global admin (React)
+#   /<repo>/customer/  → Flutter customer PWA
+#
+# One-time: repo Settings → Pages → Source = "GitHub Actions".
+# Optional: repo Variable BREW_API = public backend URL (else a placeholder).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/brew-pos-web/**"
+      - "apps/brew-admin-global/**"
+      - "apps/brew-mobile-customer/**"
+      - "packages/brew-contracts/**"
+      - ".github/pages/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BREW_API: ${{ vars.BREW_API || 'https://api.brew.example' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve base path
+        run: echo "BASE=/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
+
+      # --- React apps (POS + admin) via pnpm + Vite ---
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @brew/contracts build
+
+      - name: Build POS (hash router, subpath base)
+        run: pnpm --filter brew-pos-web exec vite build --base="$BASE/pos/"
+        env:
+          VITE_USE_HASH_ROUTER: "true"
+          VITE_API_BASE_URL: ${{ env.BREW_API }}
+          VITE_STORE_ID: store_1
+      - name: Build admin (hash router, subpath base)
+        run: pnpm --filter brew-admin-global exec vite build --base="$BASE/admin/"
+        env:
+          VITE_USE_HASH_ROUTER: "true"
+          VITE_API_BASE_URL: ${{ env.BREW_API }}
+
+      # --- Flutter customer PWA ---
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build customer PWA (subpath base)
+        working-directory: apps/brew-mobile-customer
+        run: |
+          flutter create . --org com.projectbrew --project-name brew_mobile_customer --platforms=web
+          flutter pub get
+          flutter build web --release --base-href "$BASE/customer/" --dart-define=BREW_API=$BREW_API
+
+      # --- Assemble the Pages site ---
+      - name: Assemble site
+        run: |
+          mkdir -p public/pos public/admin public/customer
+          cp .github/pages/index.html public/index.html
+          cp -r apps/brew-pos-web/dist/*        public/pos/
+          cp -r apps/brew-admin-global/dist/*    public/admin/
+          cp -r apps/brew-mobile-customer/build/web/* public/customer/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: public }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

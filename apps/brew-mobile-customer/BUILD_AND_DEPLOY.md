@@ -51,15 +51,16 @@ aws cloudfront create-invalidation --distribution-id <id> --paths '/*'
 ```
 The PWA is installable (Add to Home Screen) on Android/desktop and iOS Safari.
 
-### Live preview on GitHub Pages (automatic)
-`.github/workflows/deploy-pwa-pages.yml` publishes the web/PWA build to GitHub
-Pages on every push to `main`. **One-time setup:** repo **Settings → Pages →
-Source = "GitHub Actions"**. Live URL: `https://<owner>.github.io/<repo>/`
-(here: `https://abhilashyes.github.io/cafe-system/`).
+### Live demo on GitHub Pages (automatic)
+The whole platform is published to GitHub Pages by
+`.github/workflows/deploy-pages.yml` on every push to `main`:
+`/<repo>/` landing · `/<repo>/pos/` · `/<repo>/admin/` · `/<repo>/customer/`
+(the PWA). **One-time setup:** repo **Settings → Pages → Source = "GitHub
+Actions"**. Customer PWA URL: `https://abhilashyes.github.io/cafe-system/customer/`.
 
 Set a repo **Variable** `BREW_API` (Settings → Secrets and variables → Actions →
-Variables) to your public backend URL so the preview's API calls resolve; the
-build injects it and sets `--base-href /<repo>/` automatically.
+Variables) to your public backend URL so the demo's API calls resolve; the build
+injects it and sets the correct subpath base automatically.
 
 ## 3. Android → Google Play
 ```bash
