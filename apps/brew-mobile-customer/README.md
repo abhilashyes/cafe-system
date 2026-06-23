@@ -1,9 +1,15 @@
 # brew-mobile-customer
 
-Project Brew **customer mobile app** — a single **Flutter / Dart** codebase for iOS
-and Android (§5.1). It is intentionally a **separate repository** and integrates
-with the platform **only via the published `brew-contracts` APIs** — there is no
-code dependency on the backend monorepo.
+Project Brew **customer app** — one **Flutter / Dart** codebase targeting **iOS,
+Android, and Web (installable PWA that runs in any browser)** (§5.1). The UI is
+**mobile-adaptive** (full-bleed on phones, centered phone-width canvas on
+web/desktop). It integrates with the platform **only via the published
+`brew-contracts` APIs** — no code dependency on the backend monorepo.
+
+> **Build & deploy to App Store / Play Store / web:** see
+> [`BUILD_AND_DEPLOY.md`](./BUILD_AND_DEPLOY.md). Quick web run:
+> `flutter create . --platforms=android,ios,web && flutter run -d chrome
+> --dart-define=BREW_API=http://localhost:3000`.
 
 > **Status:** working vertical slice — phone+OTP login → store menu → cart →
 > place order + UPI checkout → live order tracking → loyalty. Privacy Center and
