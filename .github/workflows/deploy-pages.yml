@@ -85,7 +85,10 @@ jobs:
           cp -r apps/brew-admin-global/dist/*    public/admin/
           cp -r apps/brew-mobile-customer/build/web/* public/customer/
 
+      # enablement: true auto-creates the Pages site (Source = GitHub Actions),
+      # so no manual repo-settings step is needed.
       - uses: actions/configure-pages@v5
+        with: { enablement: true }
       - uses: actions/upload-pages-artifact@v3
         with: { path: public }
 
