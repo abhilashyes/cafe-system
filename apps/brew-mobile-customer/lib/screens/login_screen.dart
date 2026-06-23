@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       } else {
                         _run(() async {
                           await appState.verifyOtp(_code.text.trim());
-                          if (mounted) context.go('/menu');
+                          if (context.mounted) context.go('/menu');
                         });
                       }
                     },

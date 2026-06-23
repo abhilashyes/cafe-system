@@ -24,7 +24,7 @@ class _CartScreenState extends State<CartScreen> {
     });
     try {
       await appState.placeOrderAndPay();
-      if (mounted) context.go('/track');
+      if (context.mounted) context.go('/track');
     } catch (e) {
       setState(() => _error = '$e');
     } finally {

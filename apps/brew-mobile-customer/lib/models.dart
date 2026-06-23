@@ -1,4 +1,4 @@
-/// Lightweight DTOs mirroring the brew-contracts shapes the app consumes.
+// Lightweight DTOs mirroring the brew-contracts shapes the app consumes.
 
 String formatPaise(int paise) => '₹${(paise / 100).toStringAsFixed(2)}';
 

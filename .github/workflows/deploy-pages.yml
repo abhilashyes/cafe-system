@@ -11,7 +11,9 @@ name: Deploy demo (GitHub Pages)
 
 on:
   push:
-    branches: [main]
+    # Deploy from main, and from the working branch so the demo can be published
+    # before the PR is merged.
+    branches: [main, claude/project-brew-cafe-platform-kp11hu]
     paths:
       - "apps/brew-pos-web/**"
       - "apps/brew-admin-global/**"
@@ -42,8 +44,8 @@ jobs:
         run: echo "BASE=/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
 
       # --- React apps (POS + admin) via pnpm + Vite ---
+      # pnpm version comes from package.json "packageManager".
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
