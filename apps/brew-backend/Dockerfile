@@ -3,7 +3,7 @@
 # syntax=docker/dockerfile:1
 
 FROM node:22-alpine AS build
-RUN corepack enable
+RUN corepack enable && apk add --no-cache openssl
 ENV CI=true
 WORKDIR /repo
 
@@ -22,7 +22,7 @@ RUN pnpm --filter @brew/contracts build \
   && pnpm --filter brew-backend build
 
 FROM node:22-alpine AS runtime
-RUN corepack enable
+RUN corepack enable && apk add --no-cache openssl
 ENV NODE_ENV=production
 WORKDIR /repo
 # Copy the built workspace (pnpm symlinks + dist + node_modules).
