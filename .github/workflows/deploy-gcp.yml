@@ -1,0 +1,55 @@
+name: Deploy backend (GCP Cloud Run)
+
+# Optional automated CD: build the backend image and roll it out to Cloud Run via
+# Workload Identity Federation (keyless — no service-account JSON in GitHub).
+# Setup of the WIF pool/provider + service account is described in
+# docs/DEPLOY-GCP.md (§7). Until those repo variables/secrets are set this
+# workflow is a no-op you can run manually.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/brew-backend/**"
+      - "packages/brew-contracts/**"
+      - "cloudbuild.yaml"
+      - ".github/workflows/deploy-gcp.yml"
+
+permissions:
+  id-token: write # required for Workload Identity Federation
+  contents: read
+
+env:
+  GCP_REGION: asia-south1
+  AR_REPO: brew
+  SERVICE: brew-backend
+  PROFILE: demo
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Skip unless the project is configured (avoids failing on forks/unconfigured repos).
+    if: ${{ vars.GCP_PROJECT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF, keyless)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build, push & deploy via Cloud Build
+        run: |
+          gcloud builds submit --config cloudbuild.yaml \
+            --substitutions=_REGION=${GCP_REGION},_REPO=${AR_REPO},_SERVICE=${SERVICE},_PROFILE=${PROFILE},_TAG=${GITHUB_SHA::12}
+
+      - name: Show service URL
+        run: |
+          gcloud run services describe "$SERVICE" --region "$GCP_REGION" \
+            --format='value(status.url)'
