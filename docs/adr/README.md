@@ -16,3 +16,4 @@ Decision → Consequences. Status: Accepted (Phase 0) unless noted.
 | 0009 | Auth & token strategy (Cognito phone+OTP, MFA for staff) |
 | 0010 | Payments: Razorpay tokenization, idempotency, webhook signatures |
 | 0011 | Data retention & erasure (DPDP) |
+| 0012 | GCP deployment option + Identity Platform auth |

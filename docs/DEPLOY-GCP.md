@@ -132,6 +132,11 @@ Actions → Variables):
 The workflow is a no-op until `GCP_PROJECT_ID` is set, so it's safe to merge now.
 
 ## 8. Path to production (later milestones)
+The codified, production-grade version of this deploy (Cloud Run + Cloud SQL +
+Memorystore + Pub/Sub + Secret Manager + **Identity Platform** + keyless CI/CD)
+lives as Terraform in **`apps/brew-infra-gcp/`** — use that instead of the manual
+steps above once you go past a throwaway demo.
+
 Switching the deployed service to `BREW_PROFILE=live` requires the real backends,
 which land milestone by milestone — each is added behind the existing ports, so
 the demo keeps working throughout:

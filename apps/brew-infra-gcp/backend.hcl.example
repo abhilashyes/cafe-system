@@ -1,0 +1,6 @@
+# Copy to backend.hcl and create the bucket first:
+#   gcloud storage buckets create gs://YOUR-TFSTATE-BUCKET --location=asia-south1 --uniform-bucket-level-access
+# Then:
+#   terraform init -backend-config=backend.hcl
+bucket = "YOUR-TFSTATE-BUCKET"
+prefix = "dev"
