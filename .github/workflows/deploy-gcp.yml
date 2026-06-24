@@ -1,10 +1,12 @@
 name: Deploy backend (GCP Cloud Run)
 
-# Optional automated CD: build the backend image and roll it out to Cloud Run via
-# Workload Identity Federation (keyless — no service-account JSON in GitHub).
-# Setup of the WIF pool/provider + service account is described in
-# docs/DEPLOY-GCP.md (§7). Until those repo variables/secrets are set this
-# workflow is a no-op you can run manually.
+# Automated CD via Workload Identity Federation (keyless — no service-account JSON
+# in GitHub). The image is built on the GitHub runner (Docker preinstalled) and
+# pushed to Artifact Registry, then deployed to Cloud Run — everything runs as the
+# deployer service account, so no Cloud Build staging bucket or extra SAs are
+# involved. Setup of the WIF pool/provider + service account + the three repo
+# variables is described in docs/DEPLOY-GCP.md (§7). The job is a no-op until
+# GCP_PROJECT_ID is set.
 
 on:
   workflow_dispatch:
@@ -13,7 +15,6 @@ on:
     paths:
       - "apps/brew-backend/**"
       - "packages/brew-contracts/**"
-      - "cloudbuild.yaml"
       - ".github/workflows/deploy-gcp.yml"
 
 permissions:
@@ -44,10 +45,27 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Build, push & deploy via Cloud Build
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Build & push image (on the runner)
         run: |
-          gcloud builds submit --config cloudbuild.yaml \
-            --substitutions=_REGION=${GCP_REGION},_REPO=${AR_REPO},_SERVICE=${SERVICE},_PROFILE=${PROFILE},_TAG=${GITHUB_SHA::12}
+          IMAGE="${GCP_REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${AR_REPO}/${SERVICE}:${GITHUB_SHA::12}"
+          docker build -f apps/brew-backend/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --image="$IMAGE" \
+            --region="$GCP_REGION" \
+            --platform=managed \
+            --port=3000 \
+            --allow-unauthenticated \
+            --set-env-vars=BREW_PROFILE=${PROFILE} \
+            --cpu=1 --memory=512Mi \
+            --min-instances=0 --max-instances=2
 
       - name: Show service URL
         run: |
