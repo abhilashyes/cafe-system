@@ -4,6 +4,8 @@
 
 FROM node:22-alpine AS build
 RUN corepack enable
+# Non-interactive: let `pnpm prune --prod` purge modules without a TTY prompt.
+ENV CI=true
 WORKDIR /repo
 
 # Copy the whole workspace (the .dockerignore strips node_modules/dist/infra/mobile);
