@@ -74,12 +74,12 @@ export class ProcurementService {
 
   /** Receive an approved PO with discrepancy handling: received quantities may
    *  differ from ordered; what actually arrives is what's added to stock. */
-  receive(poId: string, received?: PoLine[]): PurchaseOrder {
+  async receive(poId: string, received?: PoLine[]): Promise<PurchaseOrder> {
     const po = this.require(poId);
     if (po.status !== 'APPROVED') throw new BadRequestException(`Cannot receive a ${po.status} PO`);
     const lines = received?.length ? received : po.lines;
     for (const line of lines) {
-      this.inventory.receiveStock(po.storeId, line.ingredientId, line.quantity);
+      await this.inventory.receiveStock(po.storeId, line.ingredientId, line.quantity);
     }
     po.status = 'RECEIVED';
     return po;

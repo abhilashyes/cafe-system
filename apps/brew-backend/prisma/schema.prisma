@@ -40,6 +40,15 @@ model StoreItem {
   @@id([storeId, productId])
 }
 
+/// Per-store on-hand ingredient stock (deducted by recipe on sale; receive/waste/transfer).
+model StockLevel {
+  storeId      String
+  ingredientId String
+  onHand       Int
+
+  @@id([storeId, ingredientId])
+}
+
 model Order {
   id             String   @id
   storeId        String
