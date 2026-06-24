@@ -63,7 +63,7 @@ jobs:
             --platform=managed \
             --port=3000 \
             --allow-unauthenticated \
-            --set-env-vars=BREW_PROFILE=${PROFILE} \
+            --set-env-vars=BREW_PROFILE=${PROFILE},BREW_AUTOCAPTURE=true \
             --cpu=1 --memory=512Mi \
             --min-instances=0 --max-instances=2
 
