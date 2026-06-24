@@ -33,6 +33,26 @@ export const isLive = (env?: NodeJS.ProcessEnv): boolean => resolveProfile(env) 
 export const isDemo = (env?: NodeJS.ProcessEnv): boolean => resolveProfile(env) === 'demo';
 
 /**
+ * Persistence is selected INDEPENDENTLY of the auth/payments profile so the
+ * platform can roll out in stages — e.g. a real Postgres database while login
+ * and payments are still mocked (BREW_PROFILE=demo + BREW_PERSISTENCE=postgres).
+ *
+ * - `memory` (default): in-memory repositories (no DB needed).
+ * - `postgres`: Prisma/Postgres repositories (requires DATABASE_URL).
+ */
+export type BrewPersistence = 'memory' | 'postgres';
+
+export function resolvePersistence(env: NodeJS.ProcessEnv = process.env): BrewPersistence {
+  const raw = (env.BREW_PERSISTENCE ?? '').trim().toLowerCase();
+  if (raw === '' || raw === 'memory' || raw === 'inmemory') return 'memory';
+  if (raw === 'postgres' || raw === 'postgresql' || raw === 'pg') return 'postgres';
+  throw new Error(`Unknown BREW_PERSISTENCE="${raw}" (expected "memory" or "postgres")`);
+}
+
+export const usesPostgres = (env?: NodeJS.ProcessEnv): boolean =>
+  resolvePersistence(env) === 'postgres';
+
+/**
  * Error thrown by `live`-profile adapters whose real integration is not yet
  * implemented/configured. Makes the seam explicit: selecting `live` before the
  * milestone that wires the integration fails loudly rather than silently mocking.

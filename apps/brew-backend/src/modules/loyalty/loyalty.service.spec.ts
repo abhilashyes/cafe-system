@@ -1,14 +1,19 @@
 import { Test } from '@nestjs/testing';
 import { EventBus } from '../../common/events/event-bus';
 import { LoyaltyService } from './loyalty.service';
+import { LoyaltyRepository, InMemoryLoyaltyRepository } from './loyalty.repository';
+
+const providers = (events?: EventBus) => [
+  LoyaltyService,
+  { provide: LoyaltyRepository, useClass: InMemoryLoyaltyRepository },
+  events ? { provide: EventBus, useValue: events } : EventBus,
+];
 
 describe('LoyaltyService', () => {
   let service: LoyaltyService;
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
-      providers: [LoyaltyService, EventBus],
-    }).compile();
+    const moduleRef = await Test.createTestingModule({ providers: providers() }).compile();
     service = moduleRef.get(LoyaltyService);
     service.onModuleInit();
   });
@@ -17,17 +22,15 @@ describe('LoyaltyService', () => {
     expect(service.listTiers()).toHaveLength(5);
   });
 
-  it('starts a new customer at the Welcome tier with zero stars', () => {
-    const account = service.getAccount('cust_1');
+  it('starts a new customer at the Welcome tier with zero stars', async () => {
+    const account = await service.getAccount('cust_1');
     expect(account.tierId).toBe('t1');
     expect(account.balanceStars).toBe(0);
   });
 
   it('accrues stars and upgrades tier when an order is placed then paid', async () => {
     const events = new EventBus();
-    const moduleRef = await Test.createTestingModule({
-      providers: [LoyaltyService, { provide: EventBus, useValue: events }],
-    }).compile();
+    const moduleRef = await Test.createTestingModule({ providers: providers(events) }).compile();
     const svc = moduleRef.get(LoyaltyService);
     svc.onModuleInit();
 
@@ -47,18 +50,16 @@ describe('LoyaltyService', () => {
       data: { paymentId: 'p1', orderId: 'o1', amountPaise: 600000 },
     });
 
-    const account = svc.getAccount('cust_2');
+    const account = await svc.getAccount('cust_2');
     expect(account.balanceStars).toBeGreaterThan(0);
     // ₹6000 spend crosses the Green threshold (500000 paise).
     expect(account.tierId).toBe('t2');
-    expect(svc.getLedger('cust_2')).toHaveLength(1);
+    expect(await svc.getLedger('cust_2')).toHaveLength(1);
   });
 
   it('does not accrue for guest checkout (no customer on the order)', async () => {
     const events = new EventBus();
-    const moduleRef = await Test.createTestingModule({
-      providers: [LoyaltyService, { provide: EventBus, useValue: events }],
-    }).compile();
+    const moduleRef = await Test.createTestingModule({ providers: providers(events) }).compile();
     const svc = moduleRef.get(LoyaltyService);
     svc.onModuleInit();
 
@@ -70,6 +71,6 @@ describe('LoyaltyService', () => {
       data: { paymentId: 'p2', orderId: 'o_guest', amountPaise: 600000 },
     });
 
-    expect(svc.getLedger('anyone')).toHaveLength(0);
+    expect(await svc.getLedger('anyone')).toHaveLength(0);
   });
 });

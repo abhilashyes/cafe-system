@@ -1,0 +1,134 @@
+// Prisma schema — Brew persistence (live profile). Postgres (Cloud SQL in prod).
+// The demo profile uses in-memory repositories and never touches this.
+//
+// Money is stored in paise (Int). Ids are app-generated UUIDs (randomUUID) so the
+// repository impls stay symmetric with the in-memory ones.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Catalog product (seeded). Availability per store lives in StoreItem.
+model Product {
+  id             String   @id
+  sku            String   @unique
+  name           String
+  category       String
+  station        String
+  basePricePaise Int
+  gstRatePercent Int      @default(5)
+  hsnSac         String   @default("2106")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  storeItems StoreItem[]
+}
+
+/// Per-store availability / 86'ing of a product.
+model StoreItem {
+  storeId   String
+  productId String
+  available Boolean @default(true)
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@id([storeId, productId])
+}
+
+model Order {
+  id             String   @id
+  storeId        String
+  channel        String
+  fulfilment     String
+  tableNumber    String?
+  customerId     String?
+  customerName   String?
+  pickupCode     String
+  status         String   @default("RECEIVED")
+  scheduledFor   String?
+  subtotalPaise  Int
+  cgstPaise      Int
+  sgstPaise      Int
+  igstPaise      Int      @default(0)
+  discountPaise  Int      @default(0)
+  grandTotalPaise Int
+  createdAt      DateTime @default(now())
+
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([storeId, status])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id             String  @id
+  orderId        String
+  productId      String
+  name           String
+  quantity       Int
+  unitPricePaise Int
+  status         String  @default("PENDING")
+  modifiers      Json    @default("[]")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Payment {
+  id              String   @id
+  orderId         String
+  method          String
+  status          String   @default("CREATED")
+  amountPaise     Int
+  gatewayOrderId  String?
+  gatewayPaymentId String?
+  idempotencyKey  String   @unique
+  upiIntent       String?
+  storeId         String
+  createdAt       DateTime @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id])
+  refunds Refund[]
+
+  @@index([gatewayOrderId])
+}
+
+model Refund {
+  id          String   @id
+  paymentId   String
+  amountPaise Int
+  status      String   @default("PROCESSED")
+  createdAt   DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model LoyaltyAccount {
+  customerId     String @id
+  tierId         String @default("t1")
+  balanceStars   Int    @default(0)
+  qualifyingSpend Int   @default(0)
+
+  ledger LoyaltyLedgerEntry[]
+}
+
+model LoyaltyLedgerEntry {
+  id         String   @id
+  customerId String
+  type       String // ACCRUAL | REDEMPTION
+  stars      Int
+  orderId    String?
+  rewardId   String?
+  createdAt  DateTime @default(now())
+
+  account LoyaltyAccount @relation(fields: [customerId], references: [customerId])
+
+  @@index([customerId])
+}

@@ -13,10 +13,12 @@ COPY . .
 # Install only what the backend needs (itself + @brew/contracts), not the web apps.
 RUN pnpm install --frozen-lockfile --filter brew-backend...
 
-# Contracts must build before the backend consumes it.
+# Contracts must build before the backend consumes it. Generate the Prisma client
+# (+ engine for this image) before compiling, since the backend imports it.
 # NOTE: no `pnpm prune --prod` — in this workspace layout it strips runtime deps
 # the backend needs (e.g. reflect-metadata), crashing the container on boot.
 RUN pnpm --filter @brew/contracts build \
+  && pnpm --filter brew-backend exec prisma generate \
   && pnpm --filter brew-backend build
 
 FROM node:22-alpine AS runtime

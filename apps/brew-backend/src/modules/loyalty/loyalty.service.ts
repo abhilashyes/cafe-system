@@ -8,8 +8,10 @@ import {
   type Reward,
 } from '@brew/contracts';
 import { EventBus } from '../../common/events/event-bus';
+import { LoyaltyRepository } from './loyalty.repository';
 
-/** Loyalty — redeemable "stars" ledger + 5 spend-based tiers. */
+/** Loyalty — redeemable "stars" ledger + 5 spend-based tiers. Accounts + ledger
+ * are persisted via LoyaltyRepository (in-memory in demo, Postgres in live). */
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
   private readonly tiers: MembershipTier[] = [
@@ -23,12 +25,13 @@ export class LoyaltyService implements OnModuleInit {
     { id: 'rw_free_coffee', name: 'Free brewed coffee', costStars: 150, discountPaise: 15000, active: true },
     { id: 'rw_free_pastry', name: 'Free pastry', costStars: 200, discountPaise: 18000, active: true },
   ];
-  private readonly accounts = new Map<string, LoyaltyAccount>();
-  private readonly ledger: LoyaltyLedgerEntry[] = [];
   /** orderId → customerId, learned from OrderPlaced so capture can accrue. */
   private readonly orderCustomer = new Map<string, string>();
 
-  constructor(private readonly events: EventBus) {}
+  constructor(
+    private readonly events: EventBus,
+    private readonly repo: LoyaltyRepository,
+  ) {}
 
   onModuleInit(): void {
     // Learn which customer an order belongs to (Loyalty stays decoupled from Ordering).
@@ -47,14 +50,15 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   private async accrue(customerId: string, amountPaise: number, orderId: string, storeId: string) {
-    const account = this.getOrCreate(customerId);
+    const account = await this.getOrCreate(customerId);
     const tier = this.tiers.find((t) => t.id === account.tierId)!;
     // Earn rate: 1 star per ₹10, times tier multiplier.
     const stars = Math.floor((amountPaise / 1000) * tier.accrualMultiplier);
     account.balanceStars += stars;
     account.qualifyingSpend += amountPaise;
     account.tierId = this.resolveTier(account.qualifyingSpend).id;
-    this.ledger.push({
+    await this.repo.saveAccount(account);
+    await this.repo.addLedger({
       id: randomUUID(),
       customerId,
       type: 'ACCRUAL',
@@ -71,12 +75,12 @@ export class LoyaltyService implements OnModuleInit {
     });
   }
 
-  getAccount(customerId: string): LoyaltyAccount {
+  getAccount(customerId: string): Promise<LoyaltyAccount> {
     return this.getOrCreate(customerId);
   }
 
-  getLedger(customerId: string): LoyaltyLedgerEntry[] {
-    return this.ledger.filter((e) => e.customerId === customerId);
+  getLedger(customerId: string): Promise<LoyaltyLedgerEntry[]> {
+    return this.repo.listLedger(customerId);
   }
 
   listTiers(): MembershipTier[] {
@@ -91,15 +95,16 @@ export class LoyaltyService implements OnModuleInit {
    * Redeem a reward: deducts stars (REDEMPTION ledger entry) and returns the
    * discount to apply to the order. Throws 402 if the balance is insufficient.
    */
-  redeem(customerId: string, rewardId: string, orderId?: string): { discountPaise: number } {
+  async redeem(customerId: string, rewardId: string, orderId?: string): Promise<{ discountPaise: number }> {
     const reward = this.rewards.find((r) => r.id === rewardId && r.active);
     if (!reward) throw new BadRequestException('Unknown reward');
-    const account = this.getOrCreate(customerId);
+    const account = await this.getOrCreate(customerId);
     if (account.balanceStars < reward.costStars) {
       throw new HttpException('Insufficient stars', HttpStatus.PAYMENT_REQUIRED);
     }
     account.balanceStars -= reward.costStars;
-    this.ledger.push({
+    await this.repo.saveAccount(account);
+    await this.repo.addLedger({
       id: randomUUID(),
       customerId,
       type: 'REDEMPTION',
@@ -111,12 +116,11 @@ export class LoyaltyService implements OnModuleInit {
     return { discountPaise: reward.discountPaise };
   }
 
-  private getOrCreate(customerId: string): LoyaltyAccount {
-    let acct = this.accounts.get(customerId);
-    if (!acct) {
-      acct = { customerId, tierId: 't1', balanceStars: 0, qualifyingSpend: 0 };
-      this.accounts.set(customerId, acct);
-    }
+  private async getOrCreate(customerId: string): Promise<LoyaltyAccount> {
+    const existing = await this.repo.getAccount(customerId);
+    if (existing) return existing;
+    const acct: LoyaltyAccount = { customerId, tierId: 't1', balanceStars: 0, qualifyingSpend: 0 };
+    await this.repo.saveAccount(acct);
     return acct;
   }
 

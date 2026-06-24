@@ -42,7 +42,7 @@ export class OrderingService {
     // Redeem a loyalty reward at checkout → discount applied to the grand total.
     if (input.rewardId) {
       if (!input.customerId) throw new BadRequestException('rewardId requires customerId');
-      const { discountPaise } = this.loyalty.redeem(input.customerId, input.rewardId, id);
+      const { discountPaise } = await this.loyalty.redeem(input.customerId, input.rewardId, id);
       totals.discountPaise = Math.min(discountPaise, totals.grandTotalPaise);
       totals.grandTotalPaise -= totals.discountPaise;
     }

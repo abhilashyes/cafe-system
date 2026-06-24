@@ -85,14 +85,14 @@ export class PrivacyService {
   }
 
   /** Data portability — aggregate everything held about a data principal. */
-  exportData(customerId: string) {
+  async exportData(customerId: string) {
     return {
       customerId,
       exportedAt: new Date().toISOString(),
       consents: this.getConsents(customerId),
       loyalty: {
-        account: this.loyalty.getAccount(customerId),
-        ledger: this.loyalty.getLedger(customerId),
+        account: await this.loyalty.getAccount(customerId),
+        ledger: await this.loyalty.getLedger(customerId),
       },
       orders: this.ordering.listByCustomer(customerId),
     };
