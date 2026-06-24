@@ -1,0 +1,57 @@
+# Build the brew-backend container and deploy it to Cloud Run.
+#
+# The Dockerfile lives at apps/brew-backend/Dockerfile but its build context must
+# be the repo ROOT (it's a pnpm monorepo), so we can't use `gcloud run deploy
+# --source`. Run this from the repo root instead:
+#
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_REGION=asia-south1,_REPO=brew,_SERVICE=brew-backend,_PROFILE=demo,_TAG=latest
+#
+# Prereqs: an Artifact Registry docker repo named ${_REPO} in ${_REGION}, and the
+# run/cloudbuild/artifactregistry APIs enabled (see docs/DEPLOY-GCP.md).
+
+substitutions:
+  _REGION: asia-south1        # Mumbai — DPDP data residency
+  _REPO: brew                 # Artifact Registry repository
+  _SERVICE: brew-backend      # Cloud Run service name
+  _PROFILE: demo              # BREW_PROFILE: demo (mocked) | live (M1+)
+  _TAG: latest                # override with a commit SHA in CI
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${_TAG}"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - apps/brew-backend/Dockerfile
+      - -t
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${_TAG}"
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${_TAG}"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - "${_SERVICE}"
+      - "--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${_TAG}"
+      - "--region=${_REGION}"
+      - "--platform=managed"
+      - "--port=3000"
+      - "--allow-unauthenticated"          # demo is public; remove for a private demo
+      - "--set-env-vars=BREW_PROFILE=${_PROFILE}"
+      - "--cpu=1"
+      - "--memory=512Mi"
+      - "--min-instances=0"                # scale to zero — pay only when hit
+      - "--max-instances=2"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

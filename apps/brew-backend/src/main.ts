@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AuditInterceptor } from './common/audit/audit.interceptor';
+import { resolveProfile } from './common/config/profile';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
@@ -33,7 +34,9 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
-  new Logger('Bootstrap').log(`brew-backend on http://localhost:${port} (docs at /docs)`);
+  new Logger('Bootstrap').log(
+    `brew-backend on http://localhost:${port} (docs at /docs) — profile=${resolveProfile()}`,
+  );
 }
 
 void bootstrap();

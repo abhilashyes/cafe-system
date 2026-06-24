@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { RbacGuard, RequirePermissions } from '../../common/auth/rbac';
 import { InventoryService } from './inventory.service';
 
 @ApiTags('inventory')
 @Controller({ version: '1' })
-@UseGuards(CognitoGuard, RbacGuard)
+@UseGuards(AuthGuard, RbacGuard)
 export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}
 

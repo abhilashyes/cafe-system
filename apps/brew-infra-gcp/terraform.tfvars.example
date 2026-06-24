@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars and fill in. Never commit real values.
+project_id      = "your-gcp-project-id"
+region          = "asia-south1"
+name_prefix     = "brew-dev"
+github_repo     = "abhilashyes/cafe-system"
+
+# Set after the first image build/push (see docs/DEPLOY-GCP.md):
+container_image = "asia-south1-docker.pkg.dev/your-gcp-project-id/brew/brew-backend:latest"
+
+# demo = mocked (no DB/Redis/secrets needed). Flip to "live" once M1-M4 land.
+brew_profile    = "demo"
+
+# Public demo by default; set false for a private service.
+public_invoker  = true
+
+# Set false in dev if you want `terraform destroy` to remove the DB.
+deletion_protection = true

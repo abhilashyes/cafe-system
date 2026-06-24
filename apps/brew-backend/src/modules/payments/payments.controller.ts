@@ -1,7 +1,7 @@
 import { Body, Controller, Headers, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { RbacGuard, RequirePermissions } from '../../common/auth/rbac';
 import { PaymentsService } from './payments.service';
 
@@ -11,7 +11,7 @@ export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
   @Post()
-  @UseGuards(CognitoGuard, RbacGuard)
+  @UseGuards(AuthGuard, RbacGuard)
   @RequirePermissions('payment:create')
   create(
     @Body() body: { orderId: string; storeId: string; method: any; amountPaise: number },
@@ -21,7 +21,7 @@ export class PaymentsController {
   }
 
   @Post(':id/refund')
-  @UseGuards(CognitoGuard, RbacGuard)
+  @UseGuards(AuthGuard, RbacGuard)
   @RequirePermissions('refund:approve')
   refund(@Param('id') id: string, @Body() body: { amountPaise?: number }) {
     return this.payments.refund(id, body?.amountPaise);

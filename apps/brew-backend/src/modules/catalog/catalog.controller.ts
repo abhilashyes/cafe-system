@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { CatalogService } from './catalog.service';
 
 @ApiTags('catalog')
@@ -9,13 +9,13 @@ export class CatalogController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get('stores/:storeId/menu')
-  @UseGuards(CognitoGuard)
+  @UseGuards(AuthGuard)
   getStoreMenu(@Param('storeId') storeId: string) {
     return this.catalog.getStoreMenu(storeId);
   }
 
   @Put('stores/:storeId/products/:productId/availability')
-  @UseGuards(CognitoGuard)
+  @UseGuards(AuthGuard)
   setAvailability(
     @Param('storeId') storeId: string,
     @Param('productId') productId: string,
