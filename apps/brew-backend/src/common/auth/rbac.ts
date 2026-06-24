@@ -7,17 +7,12 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
+import type { Principal } from './principal';
 
 export const PERMISSIONS_KEY = 'required_permissions';
 
 /** Decorate a handler with the granular permissions it requires. */
 export const RequirePermissions = (...perms: string[]) => SetMetadata(PERMISSIONS_KEY, perms);
-
-interface Principal {
-  subjectId: string;
-  roles: string[];
-  permissions?: string[];
-}
 
 /**
  * Least-privilege RBAC enforced server-side on every protected endpoint

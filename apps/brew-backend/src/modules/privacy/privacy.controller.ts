@@ -2,13 +2,13 @@ import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/comm
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { ConsentPurpose, DsrType } from '@brew/contracts';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { RbacGuard, RequirePermissions } from '../../common/auth/rbac';
 import { PrivacyService } from './privacy.service';
 
 @ApiTags('privacy')
 @Controller({ path: 'privacy', version: '1' })
-@UseGuards(CognitoGuard)
+@UseGuards(AuthGuard)
 export class PrivacyController {
   constructor(private readonly privacy: PrivacyService) {}
 

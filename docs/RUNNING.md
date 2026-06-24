@@ -39,6 +39,14 @@ land. The active profile is logged at boot (`Runtime profile: …`). Selecting
 `live` before an integration's milestone is implemented fails loudly rather than
 silently mocking.
 
+**Authentication.** In `demo`, any `Bearer` token is accepted and you can spoof
+roles with `x-mock-roles` / `x-mock-permissions` headers. In `live`, auth is
+**Firebase Auth / Identity Platform**: clients run phone+OTP / email+MFA with the
+Firebase SDK and send the resulting **ID token** as `Authorization: Bearer <jwt>`;
+the backend verifies it (RS256 against Google's certs, `iss`/`aud`/`exp`) and maps
+the token's `roles`/`permissions` custom claims onto the principal. Set
+`FIREBASE_PROJECT_ID` for the live profile.
+
 ## 3. Verify the end-to-end flow (one command)
 With the backend running, in another terminal:
 ```bash

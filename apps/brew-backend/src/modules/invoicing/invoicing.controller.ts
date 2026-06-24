@@ -1,11 +1,11 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { InvoicingService } from './invoicing.service';
 
 @ApiTags('invoicing')
 @Controller({ version: '1' })
-@UseGuards(CognitoGuard)
+@UseGuards(AuthGuard)
 export class InvoicingController {
   constructor(private readonly invoicing: InvoicingService) {}
 

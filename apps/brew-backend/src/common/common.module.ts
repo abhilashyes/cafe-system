@@ -2,6 +2,8 @@ import { Global, Logger, Module } from '@nestjs/common';
 import { EventBus } from './events/event-bus';
 import { AuthAdapter, LiveAuthAdapter, MockAuthAdapter } from './adapters/auth.adapter';
 import { PaymentAdapter, LivePaymentAdapter, MockPaymentAdapter } from './adapters/payment.adapter';
+import { TokenVerifier, MockTokenVerifier, FirebaseTokenVerifier } from './auth/token-verifier';
+import { AuthGuard } from './auth/auth.guard';
 import { BREW_PROFILE, resolveProfile } from './config/profile';
 
 /**
@@ -19,10 +21,12 @@ new Logger('CommonModule').log(`Runtime profile: ${profile}`);
 @Module({
   providers: [
     EventBus,
+    AuthGuard,
     { provide: BREW_PROFILE, useValue: profile },
     { provide: AuthAdapter, useClass: profile === 'live' ? LiveAuthAdapter : MockAuthAdapter },
     { provide: PaymentAdapter, useClass: profile === 'live' ? LivePaymentAdapter : MockPaymentAdapter },
+    { provide: TokenVerifier, useClass: profile === 'live' ? FirebaseTokenVerifier : MockTokenVerifier },
   ],
-  exports: [EventBus, AuthAdapter, PaymentAdapter, BREW_PROFILE],
+  exports: [EventBus, AuthGuard, AuthAdapter, PaymentAdapter, TokenVerifier, BREW_PROFILE],
 })
 export class CommonModule {}

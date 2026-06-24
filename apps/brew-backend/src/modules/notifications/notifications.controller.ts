@@ -1,11 +1,11 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { NotificationsService } from './notifications.service';
 
 @ApiTags('notifications')
 @Controller({ path: 'notifications', version: '1' })
-@UseGuards(CognitoGuard)
+@UseGuards(AuthGuard)
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 

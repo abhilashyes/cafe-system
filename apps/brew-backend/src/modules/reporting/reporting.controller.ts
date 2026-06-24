@@ -1,12 +1,12 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { RbacGuard, RequirePermissions } from '../../common/auth/rbac';
 import { ReportingService } from './reporting.service';
 
 @ApiTags('reporting')
 @Controller({ path: 'reports', version: '1' })
-@UseGuards(CognitoGuard, RbacGuard)
+@UseGuards(AuthGuard, RbacGuard)
 export class ReportingController {
   constructor(private readonly reporting: ReportingService) {}
 

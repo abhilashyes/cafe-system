@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CognitoGuard } from '../../common/auth/cognito.guard';
+import { AuthGuard } from '../../common/auth/auth.guard';
 import { RbacGuard, RequirePermissions } from '../../common/auth/rbac';
 import { ProcurementService, type PoLine } from './procurement.service';
 
 @ApiTags('procurement')
 @Controller({ version: '1' })
-@UseGuards(CognitoGuard, RbacGuard)
+@UseGuards(AuthGuard, RbacGuard)
 export class ProcurementController {
   constructor(private readonly procurement: ProcurementService) {}
 

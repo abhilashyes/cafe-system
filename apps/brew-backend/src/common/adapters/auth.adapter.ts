@@ -32,18 +32,20 @@ export class MockAuthAdapter extends AuthAdapter {
 }
 
 /**
- * Live AWS Cognito adapter (selected by BREW_PROFILE=live). The real
- * implementation — Cognito user-pool sign-up/sign-in, SMS OTP, JWKS-backed token
- * issuance — lands in milestone M2. The class exists now so the composition root
- * can bind it; calling it before M2 fails loudly via `notConfigured`.
+ * Live auth adapter (selected by BREW_PROFILE=live). With **Firebase Auth /
+ * Identity Platform** the phone+OTP and email/MFA flows run **client-side** via
+ * the Firebase SDK — the server does not initiate OTP. The server's job is to
+ * *verify* the resulting ID token, which is handled by `FirebaseTokenVerifier`
+ * (see auth/token-verifier.ts), not this adapter. These server-initiated OTP
+ * methods are therefore unused in the Firebase flow and fail loudly if called.
  */
 @Injectable()
 export class LiveAuthAdapter extends AuthAdapter {
   async startOtp(_phone: string): Promise<void> {
-    throw notConfigured('Cognito auth', 'M2 (Identity & access)');
+    throw notConfigured('Server-initiated OTP (Firebase does phone OTP client-side)', 'M2');
   }
 
   async verifyOtp(_phone: string, _code: string): Promise<AuthTokens> {
-    throw notConfigured('Cognito auth', 'M2 (Identity & access)');
+    throw notConfigured('Server-initiated OTP (Firebase does phone OTP client-side)', 'M2');
   }
 }
