@@ -1,0 +1,73 @@
+name: Deploy business web (POS + Admin → Firebase Hosting)
+
+# Builds the POS and Admin React apps against the live Cloud Run backend and
+# deploys each to its own Firebase Hosting site via keyless WIF (same as the
+# customer app). One-time setup (docs/DEPLOY-GCP.md §9): create the two Hosting
+# sites and grant the deployer SA roles/firebasehosting.admin (already granted).
+# No-op until GCP_PROJECT_ID is set.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/brew-pos-web/**"
+      - "apps/brew-admin-global/**"
+      - "packages/brew-contracts/**"
+      - "firebase.json"
+      - ".github/workflows/deploy-business-web.yml"
+
+permissions:
+  id-token: write # Workload Identity Federation
+  contents: read
+
+env:
+  # Live Cloud Run backend (demo profile: any bearer token accepted, OTP 000000).
+  VITE_API_BASE_URL: "https://brew-backend-dnhp2ldkmq-el.a.run.app"
+  POS_SITE: "brew-pos-2f9d9c77"
+  ADMIN_SITE: "brew-admin-2f9d9c77"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.GCP_PROJECT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @brew/contracts build
+
+      # Root base + browser router + SPA rewrite (firebase.json) → clean URLs.
+      - name: Build POS (live backend)
+        run: pnpm --filter brew-pos-web exec vite build
+        env:
+          VITE_DEMO: "false"
+          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+          VITE_STORE_ID: store_1
+      - name: Build Admin (live backend)
+        run: pnpm --filter brew-admin-global exec vite build
+        env:
+          VITE_DEMO: "false"
+          VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+
+      - name: Authenticate to Google Cloud (WIF, keyless)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - name: Deploy POS + Admin to Firebase Hosting
+        run: |
+          npm i -g firebase-tools
+          firebase deploy \
+            --only hosting:${POS_SITE},hosting:${ADMIN_SITE} \
+            --project "${{ vars.GCP_PROJECT_ID }}" --non-interactive
+
+      - name: Show URLs
+        run: |
+          echo "POS   → https://${POS_SITE}.web.app"
+          echo "Admin → https://${ADMIN_SITE}.web.app"
