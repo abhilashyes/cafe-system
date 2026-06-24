@@ -1,0 +1,59 @@
+name: Deploy customer web (Firebase Hosting)
+
+# Builds the Flutter customer app for web and deploys it to Firebase Hosting via
+# keyless Workload Identity Federation (the same WIF used by the backend deploy).
+# firebase-tools authenticates with Application Default Credentials exported by
+# google-github-actions/auth — no FIREBASE_TOKEN or service-account key needed.
+#
+# One-time setup (see docs/DEPLOY-GCP.md §9): add Firebase to the GCP project,
+# enable a Hosting site, and grant the deployer SA roles/firebasehosting.admin.
+# No-op until GCP_PROJECT_ID is set.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/brew-mobile-customer/**"
+      - "firebase.json"
+      - ".github/workflows/deploy-customer-web.yml"
+
+permissions:
+  id-token: write # required for Workload Identity Federation
+  contents: read
+
+env:
+  BREW_DEMO: "true" # self-contained demo build (no backend dependency)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.GCP_PROJECT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build Flutter web
+        working-directory: apps/brew-mobile-customer
+        run: |
+          flutter create . --org com.projectbrew --project-name brew_mobile_customer --platforms=web
+          flutter pub get
+          flutter build web --release --base-href "/" --dart-define=BREW_DEMO=${BREW_DEMO}
+
+      - name: Authenticate to Google Cloud (WIF, keyless)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - name: Deploy to Firebase Hosting
+        run: |
+          npm i -g firebase-tools
+          firebase deploy --only hosting --project "${{ vars.GCP_PROJECT_ID }}" --non-interactive
+
+      - name: Show hosting URL
+        run: echo "Deployed → https://${{ vars.GCP_PROJECT_ID }}.web.app"

@@ -131,6 +131,32 @@ Actions → Variables):
 
 The workflow is a no-op until `GCP_PROJECT_ID` is set, so it's safe to merge now.
 
+## 9. Flutter customer web → Firebase Hosting
+`.github/workflows/deploy-customer-web.yml` builds the Flutter web app and deploys
+it to **Firebase Hosting** using the same keyless WIF (firebase-tools authenticates
+via the Application Default Credentials exported by `google-github-actions/auth` —
+no token or key). One-time setup:
+
+1. **Add Firebase to the GCP project + create a Hosting site** (console is easiest):
+   https://console.firebase.google.com → *Add project* → *Add Firebase to an
+   existing Google Cloud project* → pick the project → then **Build → Hosting →
+   Get started** (creates the default site `<project-id>.web.app`).
+2. **Enable APIs + grant the deployer SA** (gcloud):
+   ```bash
+   PID=$(gcloud config get-value project)
+   SA="brew-deployer@${PID}.iam.gserviceaccount.com"
+   gcloud services enable firebase.googleapis.com firebasehosting.googleapis.com
+   gcloud projects add-iam-policy-binding "$PID" --member="serviceAccount:${SA}" \
+     --role="roles/firebasehosting.admin" --condition=None
+   gcloud projects add-iam-policy-binding "$PID" --member="serviceAccount:${SA}" \
+     --role="roles/firebase.viewer" --condition=None
+   ```
+
+The app deploys in **demo mode** (`BREW_DEMO=true`, self-contained). To point it at
+the live backend instead, set the workflow env `BREW_DEMO: "false"` and add
+`--dart-define=apiBaseUrl=<cloud-run-url>` to the build. Live URL:
+`https://<project-id>.web.app`.
+
 ## 8. Path to production (later milestones)
 The codified, production-grade version of this deploy (Cloud Run + Cloud SQL +
 Memorystore + Pub/Sub + Secret Manager + **Identity Platform** + keyless CI/CD)
