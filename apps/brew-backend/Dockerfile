@@ -4,7 +4,6 @@
 
 FROM node:22-alpine AS build
 RUN corepack enable
-# Non-interactive: let `pnpm prune --prod` purge modules without a TTY prompt.
 ENV CI=true
 WORKDIR /repo
 
@@ -15,15 +14,16 @@ COPY . .
 RUN pnpm install --frozen-lockfile --filter brew-backend...
 
 # Contracts must build before the backend consumes it.
+# NOTE: no `pnpm prune --prod` — in this workspace layout it strips runtime deps
+# the backend needs (e.g. reflect-metadata), crashing the container on boot.
 RUN pnpm --filter @brew/contracts build \
-  && pnpm --filter brew-backend build \
-  && pnpm prune --prod
+  && pnpm --filter brew-backend build
 
 FROM node:22-alpine AS runtime
 RUN corepack enable
 ENV NODE_ENV=production
 WORKDIR /repo
-# Copy the built workspace (pnpm symlinks + dist + prod node_modules).
+# Copy the built workspace (pnpm symlinks + dist + node_modules).
 COPY --from=build /repo /repo
 WORKDIR /repo/apps/brew-backend
 EXPOSE 3000
