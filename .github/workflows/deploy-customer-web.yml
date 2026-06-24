@@ -57,7 +57,7 @@ jobs:
       - name: Deploy to Firebase Hosting
         run: |
           npm i -g firebase-tools
-          firebase deploy --only hosting --project "${{ vars.GCP_PROJECT_ID }}" --non-interactive
+          firebase deploy --only hosting:${{ vars.GCP_PROJECT_ID }} --project "${{ vars.GCP_PROJECT_ID }}" --non-interactive
 
       - name: Show hosting URL
         run: echo "Deployed → https://${{ vars.GCP_PROJECT_ID }}.web.app"

@@ -1,7 +1,22 @@
 {
-  "hosting": {
-    "public": "apps/brew-mobile-customer/build/web",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
-  }
+  "hosting": [
+    {
+      "site": "project-2f9d9c77-b7be-42de-ba1",
+      "public": "apps/brew-mobile-customer/build/web",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "site": "brew-pos-2f9d9c77",
+      "public": "apps/brew-pos-web/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "site": "brew-admin-2f9d9c77",
+      "public": "apps/brew-admin-global/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    }
+  ]
 }
