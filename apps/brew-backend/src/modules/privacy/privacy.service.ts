@@ -94,7 +94,7 @@ export class PrivacyService {
         account: await this.loyalty.getAccount(customerId),
         ledger: await this.loyalty.getLedger(customerId),
       },
-      orders: this.ordering.listByCustomer(customerId),
+      orders: await this.ordering.listByCustomer(customerId),
     };
   }
 
@@ -106,7 +106,7 @@ export class PrivacyService {
     for (const purpose of ['TRANSACTIONAL', 'MARKETING', 'ANALYTICS'] as ConsentPurpose[]) {
       if (this.hasConsent(customerId, purpose)) await this.setConsent(customerId, purpose, false);
     }
-    const ordersAnonymized = this.ordering.anonymizeCustomer(customerId);
+    const ordersAnonymized = await this.ordering.anonymizeCustomer(customerId);
     const dsr = this.createDsr(customerId, 'ERASURE');
     dsr.status = 'FULFILLED';
     return { customerId, ordersAnonymized, status: 'ERASED' as const };

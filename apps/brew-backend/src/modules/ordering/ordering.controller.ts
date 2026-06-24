@@ -19,8 +19,8 @@ export class OrderingController {
 
   @Get(':id')
   @RequirePermissions('order:read')
-  get(@Param('id') id: string) {
-    const order = this.orders.get(id);
+  async get(@Param('id') id: string) {
+    const order = await this.orders.get(id);
     if (!order) throw new NotFoundException();
     return order;
   }

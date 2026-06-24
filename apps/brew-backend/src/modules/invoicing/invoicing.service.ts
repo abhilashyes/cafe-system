@@ -18,8 +18,8 @@ export class InvoicingService {
     private readonly catalog: CatalogService,
   ) {}
 
-  buildForOrder(orderId: string): GstInvoice {
-    const order = this.ordering.get(orderId);
+  async buildForOrder(orderId: string): Promise<GstInvoice> {
+    const order = await this.ordering.get(orderId);
     if (!order) throw new NotFoundException('Unknown order');
 
     const lines: GstInvoiceLine[] = order.items.map((item) => {

@@ -4,6 +4,7 @@ import { DomainEvents, type Order, type OrderItem, type OrderTotals } from '@bre
 import { EventBus } from '../../common/events/event-bus';
 import { CatalogService } from '../catalog/catalog.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { OrderRepository } from './order.repository';
 
 export interface CreateOrderInput {
   storeId: string;
@@ -20,17 +21,16 @@ export interface CreateOrderInput {
 /**
  * Ordering domain (extraction-ready). Owns the order lifecycle, prices items via
  * Catalog (internal interface), computes GST, and publishes OrderPlaced so
- * Payments, Inventory, KOT, Loyalty and Reporting can react.
- * MOCK persistence: in-memory map (Aurora in prod, DynamoDB for live carts).
+ * Payments, Inventory, KOT, Loyalty and Reporting can react. Orders are persisted
+ * via OrderRepository (in-memory in demo, Postgres in live).
  */
 @Injectable()
 export class OrderingService {
-  private readonly orders = new Map<string, Order>();
-
   constructor(
     private readonly events: EventBus,
     private readonly catalog: CatalogService,
     private readonly loyalty: LoyaltyService,
+    private readonly repo: OrderRepository,
   ) {}
 
   async create(input: CreateOrderInput): Promise<Order> {
@@ -62,7 +62,7 @@ export class OrderingService {
       totals,
       createdAt: new Date().toISOString(),
     };
-    this.orders.set(id, order);
+    await this.repo.save(order);
 
     await this.events.publish({
       name: DomainEvents.OrderPlaced,
@@ -143,36 +143,29 @@ export class OrderingService {
     };
   }
 
-  get(id: string): Order | undefined {
-    return this.orders.get(id);
+  get(id: string): Promise<Order | undefined> {
+    return this.repo.get(id);
   }
 
   /** All orders for a customer (used by the Privacy data-export flow). */
-  listByCustomer(customerId: string): Order[] {
-    return [...this.orders.values()].filter((o) => o.customerId === customerId);
+  listByCustomer(customerId: string): Promise<Order[]> {
+    return this.repo.listByCustomer(customerId);
   }
 
   /**
    * DPDP erasure: pseudonymize the customer on their orders. Financial figures
    * (amounts, GST) are retained per tax law; the identity is scrubbed.
    */
-  anonymizeCustomer(customerId: string): number {
-    let count = 0;
-    for (const order of this.orders.values()) {
-      if (order.customerId === customerId) {
-        order.customerId = undefined;
-        order.customerName = 'REDACTED';
-        count++;
-      }
-    }
-    return count;
+  anonymizeCustomer(customerId: string): Promise<number> {
+    return this.repo.anonymizeCustomer(customerId);
   }
 
   async markReady(id: string): Promise<Order | undefined> {
-    const order = this.orders.get(id);
+    const order = await this.repo.get(id);
     if (!order) return undefined;
     order.status = 'READY';
     order.items.forEach((i) => (i.status = 'READY'));
+    await this.repo.save(order);
     await this.events.publish({
       name: DomainEvents.OrderReady,
       storeId: order.storeId,

@@ -44,7 +44,7 @@ export class KotService implements OnModuleInit {
     orderId: string,
     lines: Array<{ productId: string; quantity: number }>,
   ): Promise<void> {
-    const order = this.ordering.get(orderId);
+    const order = await this.ordering.get(orderId);
     const items: KdsTicketItem[] = lines.map((line) => {
       const product = this.catalog.getProduct(line.productId);
       const station: StationType = product?.station ?? 'BAR';
@@ -91,7 +91,7 @@ export class KotService implements OnModuleInit {
     orderId: string,
     itemName: string,
     station: StationType,
-    order: ReturnType<OrderingService['get']>,
+    order: Awaited<ReturnType<OrderingService['get']>>,
   ): PrintJob {
     return {
       id: randomUUID(),
