@@ -23,7 +23,9 @@ permissions:
   contents: read
 
 env:
-  BREW_DEMO: "true" # self-contained demo build (no backend dependency)
+  # Hooked up to the live Cloud Run backend (demo profile: OTP 000000, mocked data).
+  BREW_DEMO: "false"
+  BREW_API: "https://brew-backend-dnhp2ldkmq-el.a.run.app"
 
 jobs:
   deploy:
@@ -41,7 +43,9 @@ jobs:
         run: |
           flutter create . --org com.projectbrew --project-name brew_mobile_customer --platforms=web
           flutter pub get
-          flutter build web --release --base-href "/" --dart-define=BREW_DEMO=${BREW_DEMO}
+          flutter build web --release --base-href "/" \
+            --dart-define=BREW_DEMO=${BREW_DEMO} \
+            --dart-define=BREW_API=${BREW_API}
 
       - name: Authenticate to Google Cloud (WIF, keyless)
         uses: google-github-actions/auth@v2
