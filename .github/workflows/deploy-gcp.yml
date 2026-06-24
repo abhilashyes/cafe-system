@@ -65,7 +65,7 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars=BREW_PROFILE=${PROFILE},BREW_AUTOCAPTURE=true \
             --cpu=1 --memory=512Mi \
-            --min-instances=0 --max-instances=2
+            --min-instances=1 --max-instances=1
 
       - name: Show service URL
         run: |
